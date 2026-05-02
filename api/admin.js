@@ -1,10 +1,11 @@
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const EMAILJS_SERVICE = process.env.EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE = process.env.EMAILJS_TEMPLATE_ID;
+const EMAILJS_KEY = process.env.EMAILJS_PUBLIC_KEY;
+const ADMIN_EMAIL = 'jackjamesbecker@gmail.com';
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const ADMIN_PHONE = process.env.ADMIN_PHONE;
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 
 const otpStore = {};
 
@@ -19,12 +20,20 @@ async function sbFetch(path) {
   return res.json();
 }
 
-async function sendSMS(to, body) {
-  const credentials = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
-  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
+async function sendEmailOTP(otp) {
+  await fetch('https://api.emailjs.com/api/v1.0/email/send', {
     method: 'POST',
-    headers: { 'Authorization': `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ To: to, From: TWILIO_PHONE_NUMBER, Body: body }).toString()
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      service_id: EMAILJS_SERVICE,
+      template_id: EMAILJS_TEMPLATE,
+      user_id: EMAILJS_KEY,
+      template_params: {
+        to_email: ADMIN_EMAIL,
+        subject: 'J.A.R.V.I.S Admin Access Code',
+        message: `Your J.A.R.V.I.S admin access code is: ${otp}\n\nThis code expires in 5 minutes.\n\nIf you did not request this, ignore this email.`
+      }
+    })
   });
 }
 
@@ -44,7 +53,7 @@ module.exports = async function handler(req, res) {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       otpStore[otp] = Date.now();
       Object.keys(otpStore).forEach(k => { if (Date.now() - otpStore[k] > 300000) delete otpStore[k]; });
-      await sendSMS('+1' + ADMIN_PHONE, `J.A.R.V.I.S ADMIN CODE: ${otp} (expires in 5 minutes)`);
+      await sendEmailOTP(otp);
       return res.status(200).json({ ok: true });
     }
 
