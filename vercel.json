@@ -3,6 +3,8 @@
     { "source": "/api/chat", "destination": "/api/chat" },
     { "source": "/api/sms", "destination": "/api/sms" },
     { "source": "/api/sms-inbox", "destination": "/api/sms-inbox" },
-    { "source": "/api/db", "destination": "/api/db" }
+    { "source": "/api/db", "destination": "/api/db" },
+    { "source": "/api/admin", "destination": "/api/admin" },
+    { "source": "/admin", "destination": "/admin.html" }
   ]
 }
