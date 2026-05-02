@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>J.A.R.V.I.S</title>
+<script>
+// Simple proxy helper — all DB calls go through Netlify function
+async function dbCall(action, payload) {
+  try {
+    const res = await fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, payload })
+    });
+    return await res.json();
+  } catch(e) {
+    console.error('DB call failed:', action, e.message);
+    return { ok: false, error: e.message };
+  }
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("K6pMBGIP-oMoAX4JK");</script>
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="J.A.R.V.I.S">
+<meta name="theme-color" content="#020b14">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#00d4ff">
+<meta property="og:title" content="J.A.R.V.I.S — Adaptive AI">
+<meta property="og:description" content="Just A Rather Very Intelligent System — Your personal adaptive AI assistant.">
+<meta name="apple-mobile-web-app-title" content="J.A.R.V.I.S">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--cyan:#00d4ff;--cyan-dim:rgba(0,212,255,0.15);--cyan-glow:rgba(0,212,255,0.4);--gold:#f0a500;--gold-dim:rgba(240,165,0,0.15);--red:#ff3b3b;--green:#00ff88;--bg:#020b14;--panel:rgba(0,20,40,0.85);--border:rgba(0,212,255,0.25);--text:#c8eeff;--text-dim:rgba(200,238,255,0.5)}
+/* COLOR THEMES */
+body.theme-gold{--cyan:#f0a500;--cyan-dim:rgba(240,165,0,0.15);--cyan-glow:rgba(240,165,0,0.4);--border:rgba(240,165,0,0.25);--text:#fff8e8;--text-dim:rgba(255,240,200,0.5);--bg:#0d0800;--panel:rgba(30,15,0,0.85)}
+body.theme-red{--cyan:#ff4444;--cyan-dim:rgba(255,68,68,0.15);--cyan-glow:rgba(255,68,68,0.4);--border:rgba(255,68,68,0.25);--text:#ffe8e8;--text-dim:rgba(255,200,200,0.5);--bg:#120000;--panel:rgba(30,0,0,0.85)}
+body.theme-green{--cyan:#00ff88;--cyan-dim:rgba(0,255,136,0.15);--cyan-glow:rgba(0,255,136,0.4);--border:rgba(0,255,136,0.25);--text:#e8fff4;--text-dim:rgba(180,255,220,0.5);--bg:#000d06;--panel:rgba(0,20,10,0.85)}
+body.theme-purple{--cyan:#bf5fff;--cyan-dim:rgba(191,95,255,0.15);--cyan-glow:rgba(191,95,255,0.4);--border:rgba(191,95,255,0.25);--text:#f0e8ff;--text-dim:rgba(220,190,255,0.5);--bg:#08000d;--panel:rgba(20,0,30,0.85)}
+body.theme-white{--cyan:#00aaff;--cyan-dim:rgba(0,170,255,0.1);--cyan-glow:rgba(0,170,255,0.3);--border:rgba(0,170,255,0.2);--text:#e8f4ff;--text-dim:rgba(160,200,240,0.6);--bg:#020810;--panel:rgba(10,20,40,0.9)}
+/* UI STYLE THEMES */
+body.ui-minimal .scanline{display:none}body.ui-minimal .corner-dec{display:none}body.ui-minimal #bg-reactor{display:none}body.ui-minimal .data-stream{display:none}body.ui-minimal .hex-cell{animation:none}
+body.ui-holo .msg-text{backdrop-filter:blur(4px);background:rgba(0,212,255,0.04)!important}body.ui-holo .left-panel,body.ui-holo .right-panel{backdrop-filter:blur(8px);background:rgba(0,10,25,0.2)!important}body.ui-holo .top-hud{backdrop-filter:blur(12px)}body.ui-holo #bg-reactor{opacity:0.22}
+body.ui-matrix *{font-family:"Share Tech Mono",monospace!important}body.ui-matrix{--cyan:#00ff41;--cyan-dim:rgba(0,255,65,0.12);--cyan-glow:rgba(0,255,65,0.35);--border:rgba(0,255,65,0.2);--bg:#000800;--text:#00ff41;--text-dim:rgba(0,180,40,0.55)}body.ui-matrix #bg-reactor{filter:hue-rotate(120deg)}
+/* THEMES PANEL */
+.themes-panel{position:fixed;right:0;top:0;bottom:0;width:290px;z-index:60;background:rgba(2,11,20,0.98);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s ease}
+.themes-panel.open{transform:translateX(0)}
+.themes-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.themes-title{font-family:"Orbitron",monospace;font-size:11px;letter-spacing:4px;color:var(--cyan)}
+.themes-close{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:"Orbitron",monospace;font-size:8px;padding:4px 8px;cursor:pointer;transition:all 0.2s}
+.themes-close:hover{border-color:var(--red);color:var(--red)}
+.themes-body{flex:1;overflow-y:auto;padding:14px}
+.themes-section{margin-bottom:18px}
+.themes-section-title{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:3px;color:var(--text-dim);border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:10px}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:4px}
+.theme-btn{padding:8px 4px;border:1px solid var(--border);background:transparent;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.theme-btn:hover,.theme-btn.active{border-color:var(--cyan);background:var(--cyan-dim)}
+.theme-btn.active::after{content:"\2713";position:absolute;top:3px;right:5px;color:var(--cyan);font-size:9px}
+.theme-swatch{width:100%;height:14px;border-radius:1px}
+.theme-name{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:1px;color:var(--text)}
+.ui-btn{width:100%;padding:9px 12px;border:1px solid var(--border);background:transparent;cursor:pointer;transition:all 0.2s;font-family:"Orbitron",monospace;font-size:8px;letter-spacing:2px;color:var(--text-dim);margin-bottom:5px;text-align:left;position:relative;display:block}
+.ui-btn:hover,.ui-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.ui-btn.active::after{content:"ON";position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:7px;color:var(--cyan)}
+.themes-btn{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:2px;padding:4px 8px;border:1px solid rgba(191,95,255,0.4);color:#bf5fff;background:rgba(191,95,255,0.08);cursor:pointer;transition:all 0.2s}
+.themes-btn:hover{background:rgba(191,95,255,0.18);box-shadow:0 0 8px rgba(191,95,255,0.3)}
+/* PROFILE PANEL */
+.profile-panel{position:fixed;left:0;top:0;bottom:0;width:300px;z-index:60;background:rgba(2,11,20,0.98);border-right:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform 0.3s ease}
+.profile-panel.open{transform:translateX(0)}
+.profile-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.profile-title{font-family:"Orbitron",monospace;font-size:11px;letter-spacing:4px;color:var(--cyan)}
+.profile-close{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:"Orbitron",monospace;font-size:8px;padding:4px 8px;cursor:pointer;transition:all 0.2s}
+.profile-close:hover{border-color:var(--red);color:var(--red)}
+.profile-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.profile-section-title{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:3px;color:var(--text-dim);border-bottom:1px solid var(--border);padding-bottom:5px}
+.profile-field{display:flex;flex-direction:column;gap:4px}
+.profile-label{font-family:"Share Tech Mono",monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px}
+.profile-val{font-family:"Share Tech Mono",monospace;font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border)}
+.profile-input{background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:12px;padding:6px 0;width:100%;transition:border-color 0.2s;letter-spacing:0.5px}
+.profile-input::placeholder{color:var(--text-dim)}
+.profile-input:focus{border-bottom-color:var(--cyan)}
+.profile-save-btn{font-family:"Orbitron",monospace;font-size:9px;letter-spacing:2px;padding:9px;background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);cursor:pointer;transition:all 0.2s;width:100%}
+.profile-save-btn:hover{background:rgba(0,212,255,0.25);box-shadow:0 0 10px var(--cyan-glow)}
+.profile-stat{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(0,212,255,0.06)}
+.profile-stat-label{font-family:"Share Tech Mono",monospace;font-size:9px;color:var(--text-dim)}
+.profile-stat-val{font-family:"Share Tech Mono",monospace;font-size:9px;color:var(--cyan)}
+.profile-clear-btn{font-family:"Orbitron",monospace;font-size:8px;letter-spacing:2px;padding:7px;background:rgba(255,59,59,0.05);border:1px solid rgba(255,59,59,0.3);color:rgba(255,100,100,0.7);cursor:pointer;transition:all 0.2s;width:100%}
+.profile-clear-btn:hover{background:rgba(255,59,59,0.15);color:var(--red);border-color:var(--red)}
+.profile-btn{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:2px;padding:4px 8px;border:1px solid rgba(0,212,255,0.3);color:var(--cyan);background:transparent;cursor:pointer;transition:all 0.2s}
+.profile-btn:hover{background:var(--cyan-dim)}
+html,body{height:100%;overflow:hidden}
+body{font-family:"Rajdhani",sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;position:relative}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+body::after{content:"";position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(0,80,120,0.18) 0%,transparent 70%);pointer-events:none;z-index:0}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pulse-core{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:0.8}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes wave{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}
+@keyframes msg-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes typing{0%,100%{transform:translateY(0);opacity:0.4}50%{transform:translateY(-5px);opacity:1}}
+@keyframes cursor-blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes scan{0%{top:-2px;opacity:1}100%{top:100%;opacity:0.3}}
+@keyframes stream-in{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:translateX(0)}}
+@keyframes hex-pulse{0%,100%{background:rgba(0,212,255,0.05)}50%{background:rgba(0,212,255,0.15)}}
+@keyframes gate-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gate-out{to{opacity:0;transform:scale(1.03);pointer-events:none}}
+@keyframes bgr-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.9)}}
+@keyframes voice-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,59,0.4)}50%{box-shadow:0 0 0 8px rgba(255,59,59,0)}}
+/* BG REACTOR */
+#bg-reactor{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:700px;pointer-events:none;z-index:1;opacity:0.13}
+#bg-reactor svg{width:100%;height:100%}
+.bgr-r1{animation:spin 60s linear infinite;transform-origin:350px 350px}
+.bgr-r2{animation:spin 40s linear infinite reverse;transform-origin:350px 350px}
+.bgr-r3{animation:spin 25s linear infinite;transform-origin:350px 350px}
+.bgr-r4{animation:spin 18s linear infinite reverse;transform-origin:350px 350px}
+.bgr-r5{animation:spin 12s linear infinite;transform-origin:350px 350px}
+.bgr-r6{animation:spin 8s linear infinite reverse;transform-origin:350px 350px}
+.bgr-blades{animation:spin 20s linear infinite;transform-origin:350px 350px}
+.bgr-blades2{animation:spin 30s linear infinite reverse;transform-origin:350px 350px}
+.bgr-core{animation:bgr-pulse 3s ease-in-out infinite;transform-origin:350px 350px}
+/* GATE */
+#email-gate{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center}
+#email-gate::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.gate-box{position:relative;width:min(420px,92vw);padding:40px 36px;border:1px solid var(--border);background:rgba(0,12,28,0.95);display:flex;flex-direction:column;align-items:center;gap:24px;animation:gate-in 0.6s ease}
+.gate-box::before{content:"";position:absolute;top:-1px;left:-1px;width:20px;height:20px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+.gate-box::after{content:"";position:absolute;bottom:-1px;right:-1px;width:20px;height:20px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+.gate-br{position:absolute;top:-1px;right:-1px;width:20px;height:20px;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+.gate-bl{position:absolute;bottom:-1px;left:-1px;width:20px;height:20px;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+.gate-reactor{width:70px;height:70px;position:relative;display:flex;align-items:center;justify-content:center}
+.gate-reactor svg{position:absolute}
+.gr-1{animation:spin 5s linear infinite}.gr-2{animation:spin 3s linear infinite reverse}.gr-3{animation:spin 9s linear infinite}
+.gate-core{width:22px;height:22px;background:radial-gradient(circle,var(--cyan),rgba(0,212,255,0.3));border-radius:50%;box-shadow:0 0 18px var(--cyan),0 0 36px var(--cyan-glow);animation:pulse-core 2s ease-in-out infinite;position:relative;z-index:2}
+.gate-title{font-family:"Orbitron",monospace;font-size:clamp(16px,5vw,22px);font-weight:900;letter-spacing:8px;color:var(--cyan);text-shadow:0 0 20px var(--cyan-glow);text-align:center}
+.gate-sub{font-family:"Share Tech Mono",monospace;font-size:9px;letter-spacing:3px;color:var(--text-dim);text-align:center;margin-top:-18px}
+.gate-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+.gate-field-label{font-family:"Orbitron",monospace;font-size:8px;letter-spacing:3px;color:var(--text-dim);align-self:flex-start;margin-bottom:-18px}
+.gate-input-wrap{width:100%;display:flex;align-items:center;border-bottom:1px solid var(--border);transition:border-color 0.2s}
+.gate-input-wrap:focus-within{border-bottom-color:var(--cyan)}
+.gate-prompt{font-family:"Share Tech Mono",monospace;font-size:13px;color:var(--cyan);padding:10px 8px 10px 0;opacity:0.7;white-space:nowrap}
+#gate-email{flex:1;background:transparent;border:none;outline:none;font-family:"Share Tech Mono",monospace;font-size:14px;color:var(--text);padding:10px 0;letter-spacing:0.5px}
+#gate-email::placeholder{color:var(--text-dim)}
+.gate-error{font-family:"Share Tech Mono",monospace;font-size:11px;letter-spacing:1px;color:var(--red);display:none;align-self:flex-start;margin-top:-18px}
+.gate-btn{width:100%;font-family:"Orbitron",monospace;font-size:11px;letter-spacing:4px;padding:14px;background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden}
+.gate-btn::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.15),transparent);transition:left 0.4s}
+.gate-btn:hover::before{left:100%}
+.gate-btn:hover{background:rgba(0,212,255,0.22);box-shadow:0 0 20px var(--cyan-glow)}
+.gate-footer{font-family:"Share Tech Mono",monospace;font-size:9px;letter-spacing:1px;color:var(--text-dim);text-align:center;line-height:1.8}
+#email-gate.fade-out{animation:gate-out 0.45s ease forwards}
+/* GATE PROGRESS */
+.gate-progress-wrap{width:100%;display:none;flex-direction:column;gap:10px;align-items:center}
+.gate-progress-wrap.active{display:flex}
+.gate-progress-label{font-family:"Share Tech Mono",monospace;font-size:9px;letter-spacing:2px;color:var(--text-dim);align-self:flex-start}
+.gate-progress-track{width:100%;height:3px;background:rgba(0,212,255,0.1);position:relative;overflow:hidden}
+.gate-progress-bar{height:100%;width:0%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);transition:width 0.08s linear}
+.gate-progress-steps{width:100%;display:flex;flex-direction:column;gap:4px}
+.gate-step{font-family:"Share Tech Mono",monospace;font-size:9px;letter-spacing:1px;color:var(--text-dim);opacity:0;transform:translateX(-6px);transition:all 0.3s ease;display:flex;align-items:center;gap:6px}
+.gate-step.visible{opacity:1;transform:translateX(0)}
+.gate-step .step-tick{color:var(--cyan);font-size:11px}
+.gate-access-granted{font-family:"Orbitron",monospace;font-size:16px;font-weight:900;letter-spacing:6px;color:var(--cyan);text-shadow:0 0 20px var(--cyan-glow),0 0 40px var(--cyan-glow);text-align:center;opacity:0;transform:scale(0.9);transition:all 0.4s ease;display:none}
+.gate-access-granted.visible{opacity:1;transform:scale(1);display:block}
+/* APP SHELL */
+#app-shell{display:none;flex-direction:column;height:100%}
+#app-shell.visible{display:flex}
+/* HUD */
+.top-hud{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(0,30,60,0.9) 0%,transparent 100%);flex-shrink:0;gap:8px}
+.hud-logo{font-family:"Orbitron",monospace;font-size:clamp(11px,2vw,17px);font-weight:900;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 20px var(--cyan-glow);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.hud-logo .version{font-size:8px;font-weight:400;color:var(--text-dim);letter-spacing:2px;margin-top:2px}
+.arc-reactor{width:30px;height:30px;position:relative;display:flex;align-items:center;justify-content:center}
+.arc-reactor svg{position:absolute}
+.arc-ring-1{animation:spin 4s linear infinite}.arc-ring-2{animation:spin 2s linear infinite reverse}
+.arc-core{width:10px;height:10px;background:var(--cyan);border-radius:50%;box-shadow:0 0 8px var(--cyan),0 0 20px var(--cyan-glow);animation:pulse-core 2s ease-in-out infinite;position:relative;z-index:2}
+.hud-stats{display:flex;gap:12px;align-items:center;flex:1;justify-content:center}
+.stat-item{text-align:center;font-family:"Share Tech Mono",monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px}
+.stat-value{font-size:12px;color:var(--cyan);display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);display:inline-block;animation:blink 2s ease-in-out infinite}
+.hud-right{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.mode-badge{font-family:"Orbitron",monospace;font-size:8px;letter-spacing:2px;padding:4px 8px;border:1px solid var(--gold);color:var(--gold);background:var(--gold-dim)}
+.signout-btn{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:2px;padding:4px 8px;border:1px solid rgba(255,59,59,0.4);color:rgba(255,100,100,0.7);background:rgba(255,59,59,0.05);cursor:pointer;transition:all 0.2s}
+.signout-btn:hover{background:rgba(255,59,59,0.15);color:var(--red);border-color:var(--red)}
+.mob-menu-btn{display:none;background:transparent;border:1px solid var(--border);color:var(--cyan);font-family:"Orbitron",monospace;font-size:9px;letter-spacing:1px;padding:5px 9px;cursor:pointer}
+/* MAIN */
+.main{flex:1;display:flex;overflow:hidden;position:relative;z-index:5}
+/* LEFT PANEL */
+.left-panel{width:185px;border-right:1px solid var(--border);display:flex;flex-direction:column;padding:12px 10px;gap:12px;background:rgba(0,10,25,0.5);flex-shrink:0;overflow-y:auto;transition:transform 0.3s ease}
+.panel-section-title{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:3px;color:var(--text-dim);border-bottom:1px solid var(--border);padding-bottom:5px}
+.capability-list{display:flex;flex-direction:column;gap:3px}
+.cap-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-dim);padding:5px 7px;border:1px solid transparent;transition:all 0.2s;cursor:pointer;user-select:none}
+.cap-item:hover,.cap-item.active{border-color:var(--border);color:var(--cyan);background:var(--cyan-dim)}
+.cap-icon{width:16px;height:16px;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:7px;flex-shrink:0}
+.vital-bar-wrap{display:flex;flex-direction:column;gap:6px}
+.vital{display:flex;flex-direction:column;gap:3px}
+.vital-label{display:flex;justify-content:space-between;font-family:"Share Tech Mono",monospace;font-size:8px;color:var(--text-dim)}
+.vital-bar{height:3px;background:rgba(0,212,255,0.1);overflow:hidden}
+.vital-fill{height:100%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);transition:width 1s ease}
+.vital-fill.warn{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.waveform{display:flex;align-items:center;gap:2px;height:34px}
+.wave-bar{width:3px;background:var(--cyan);border-radius:1px;opacity:0.6;animation:wave 1.5s ease-in-out infinite;transition:height 0.3s ease}
+/* CHAT */
+.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;min-width:0}
+.scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.3),transparent);animation:scan 6s linear infinite;pointer-events:none;z-index:20}
+.messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:13px;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--cyan-glow) transparent}
+.messages::-webkit-scrollbar{width:3px}.messages::-webkit-scrollbar-thumb{background:var(--cyan-glow)}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;padding:24px;text-align:center}
+.welcome-ring{width:96px;height:96px;position:relative;display:flex;align-items:center;justify-content:center}
+.welcome-ring svg{position:absolute}
+.w-ring-1{animation:spin 8s linear infinite}.w-ring-2{animation:spin 5s linear infinite reverse}.w-ring-3{animation:spin 12s linear infinite}
+.welcome-core{width:30px;height:30px;background:radial-gradient(circle,var(--cyan),rgba(0,212,255,0.3));border-radius:50%;box-shadow:0 0 20px var(--cyan),0 0 40px var(--cyan-glow);animation:pulse-core 2s ease-in-out infinite}
+.welcome h1{font-family:"Orbitron",monospace;font-size:clamp(10px,2.5vw,13px);letter-spacing:6px;color:var(--cyan);text-shadow:0 0 20px var(--cyan-glow)}
+.welcome p{font-size:12px;color:var(--text-dim);max-width:360px;line-height:1.7;font-family:"Share Tech Mono",monospace}
+.quick-cmds{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:460px}
+.quick-cmd{font-family:"Share Tech Mono",monospace;font-size:10px;padding:5px 11px;border:1px solid var(--border);color:var(--text-dim);background:transparent;cursor:pointer;transition:all 0.2s;letter-spacing:1px}
+.quick-cmd:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);box-shadow:0 0 10px var(--cyan-glow)}
+.msg{display:flex;gap:10px;max-width:92%;animation:msg-in 0.3s ease}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg.ai{align-self:flex-start}
+.msg-avatar{width:28px;height:28px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:"Orbitron",monospace;font-size:7px;color:var(--cyan);flex-shrink:0;position:relative}
+.msg-avatar::before{content:"";position:absolute;inset:-3px;border:1px solid rgba(0,212,255,0.15)}
+.msg.user .msg-avatar{color:var(--gold);border-color:rgba(240,165,0,0.3)}
+.msg-content{display:flex;flex-direction:column;gap:3px;min-width:0}
+.msg-header{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:2px;color:var(--text-dim);display:flex;gap:6px;align-items:center}
+.msg-header .dot{color:var(--cyan)}.msg.user .msg-header .dot{color:var(--gold)}
+.msg-text{font-size:13px;line-height:1.7;color:var(--text);padding:9px 12px;border:1px solid var(--border);background:var(--panel);position:relative;word-wrap:break-word}
+.msg.user .msg-text{border-color:rgba(240,165,0,0.2);background:rgba(240,165,0,0.05);color:rgba(240,220,180,0.9)}
+.msg.ai .msg-text::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--cyan),transparent)}
+.typing-indicator{display:flex;gap:4px;align-items:center;padding:11px 12px}
+.typing-dot{width:5px;height:5px;background:var(--cyan);border-radius:50%;animation:typing 1.4s ease-in-out infinite;box-shadow:0 0 6px var(--cyan)}
+.typing-dot:nth-child(2){animation-delay:0.2s}.typing-dot:nth-child(3){animation-delay:0.4s}
+.cursor{display:inline-block;width:7px;height:13px;background:var(--cyan);margin-left:2px;vertical-align:middle;animation:cursor-blink 0.8s step-end infinite}
+/* INPUT */
+.input-area{border-top:1px solid var(--border);padding:11px 14px;background:linear-gradient(0deg,rgba(0,15,30,0.9) 0%,transparent 100%);flex-shrink:0}
+.input-row{display:flex;gap:7px;align-items:flex-end}
+.input-decor{font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--cyan);padding-bottom:9px;white-space:nowrap;opacity:0.7}
+#user-input{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:13px;padding:7px 0 9px;resize:none;min-height:36px;max-height:100px;line-height:1.5;transition:border-color 0.2s;letter-spacing:0.5px}
+#user-input::placeholder{color:var(--text-dim)}
+#user-input:focus{border-bottom-color:var(--cyan)}
+.voice-btn{width:36px;height:36px;background:transparent;border:1px solid var(--border);color:var(--text-dim);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.voice-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.voice-btn.recording{border-color:var(--red);color:var(--red);background:rgba(255,59,59,0.1);animation:voice-pulse 1s ease-in-out infinite}
+.voice-btn svg{width:15px;height:15px}
+.send-btn{font-family:"Orbitron",monospace;font-size:9px;letter-spacing:2px;padding:9px 13px;background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);cursor:pointer;transition:all 0.2s;white-space:nowrap;height:36px;flex-shrink:0}
+.send-btn:hover{background:rgba(0,212,255,0.25);box-shadow:0 0 15px var(--cyan-glow)}
+.send-btn:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none}
+.input-hint{font-family:"Share Tech Mono",monospace;font-size:8px;color:var(--text-dim);letter-spacing:1px;margin-top:5px;display:flex;gap:12px;flex-wrap:wrap}
+.voice-status{color:var(--red);display:none}
+.voice-status.active{display:inline}
+/* RIGHT PANEL */
+.right-panel{width:165px;border-left:1px solid var(--border);display:flex;flex-direction:column;padding:12px 10px;gap:12px;background:rgba(0,10,25,0.5);flex-shrink:0;overflow-y:auto;transition:transform 0.3s ease}
+.hex-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.hex-cell{aspect-ratio:1;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.1);animation:hex-pulse 3s ease-in-out infinite}
+.data-stream{font-family:"Share Tech Mono",monospace;font-size:8px;color:var(--text-dim);line-height:1.8;overflow:hidden;max-height:105px}
+.stream-line{animation:stream-in 0.3s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* INCOMING SMS */
+.msg.sms-in { align-self: flex-start; }
+.msg.sms-in .msg-avatar { color: var(--green); border-color: rgba(0,255,136,0.3); }
+.msg.sms-in .msg-avatar::before { border-color: rgba(0,255,136,0.1); }
+.msg.sms-in .msg-text { border-color: rgba(0,255,136,0.25); background: rgba(0,255,136,0.05); }
+.msg.sms-in .msg-text::before { background: linear-gradient(180deg, var(--green), transparent); }
+.msg.sms-in .msg-header .dot { color: var(--green); }
+.sms-poll-indicator { position: fixed; bottom: 32px; right: 12px; font-family: "Share Tech Mono", monospace; font-size: 8px; color: var(--text-dim); letter-spacing: 1px; z-index: 20; display: flex; align-items: center; gap: 5px; opacity: 0; transition: opacity 0.3s; }
+.sms-poll-indicator.active { opacity: 1; }
+.sms-poll-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: blink 1s ease-in-out infinite; }
+
+/* CONTACTS PANEL */
+.contacts-panel{position:fixed;right:0;top:0;bottom:0;width:320px;z-index:60;background:rgba(2,11,20,0.98);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s ease;padding:0}
+.contacts-panel.open{transform:translateX(0)}
+.contacts-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.contacts-title{font-family:"Orbitron",monospace;font-size:11px;letter-spacing:4px;color:var(--cyan)}
+.contacts-close{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:"Orbitron",monospace;font-size:8px;letter-spacing:1px;padding:4px 8px;cursor:pointer;transition:all 0.2s}
+.contacts-close:hover{border-color:var(--red);color:var(--red)}
+.contacts-add{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.contacts-add-title{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:3px;color:var(--text-dim)}
+.contact-input{background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:12px;padding:6px 0;width:100%;transition:border-color 0.2s;letter-spacing:0.5px}
+.contact-input::placeholder{color:var(--text-dim)}
+.contact-input:focus{border-bottom-color:var(--cyan)}
+.contacts-add-btn{font-family:"Orbitron",monospace;font-size:9px;letter-spacing:2px;padding:8px;background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);cursor:pointer;transition:all 0.2s;width:100%}
+.contacts-add-btn:hover{background:rgba(0,212,255,0.25);box-shadow:0 0 10px var(--cyan-glow)}
+.contacts-search-wrap{padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.contacts-search{background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:12px;padding:5px 0;width:100%;transition:border-color 0.2s}
+.contacts-search::placeholder{color:var(--text-dim)}
+.contacts-search:focus{border-bottom-color:var(--cyan)}
+.contacts-list{flex:1;overflow-y:auto;padding:8px 0;scrollbar-width:thin;scrollbar-color:var(--cyan-glow) transparent}
+.contacts-list::-webkit-scrollbar{width:3px}.contacts-list::-webkit-scrollbar-thumb{background:var(--cyan-glow)}
+.contact-item{padding:10px 16px;border-bottom:1px solid rgba(0,212,255,0.08);display:flex;align-items:center;gap:10px;transition:background 0.2s;cursor:pointer}
+.contact-item:hover{background:var(--cyan-dim)}
+.contact-avatar{width:32px;height:32px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:"Orbitron",monospace;font-size:10px;color:var(--cyan);flex-shrink:0}
+.contact-info{flex:1;min-width:0}
+.contact-name{font-family:"Orbitron",monospace;font-size:10px;letter-spacing:1px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contact-details{font-family:"Share Tech Mono",monospace;font-size:9px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.contact-actions{display:flex;gap:4px;flex-shrink:0}
+.contact-action-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:9px;padding:3px 6px;cursor:pointer;transition:all 0.2s;font-family:"Share Tech Mono",monospace}
+.contact-action-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.contact-action-btn.del:hover{border-color:var(--red);color:var(--red)}
+.contacts-empty{padding:30px 16px;text-align:center;font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text-dim);line-height:1.8}
+.contacts-count{padding:6px 16px;font-family:"Share Tech Mono",monospace;font-size:8px;color:var(--text-dim);letter-spacing:1px;border-top:1px solid var(--border);flex-shrink:0}
+/* Contacts button in HUD */
+.contacts-btn{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:2px;padding:4px 8px;border:1px solid rgba(0,212,255,0.4);color:var(--cyan);background:var(--cyan-dim);cursor:pointer;transition:all 0.2s}
+.contacts-btn:hover{background:rgba(0,212,255,0.25);box-shadow:0 0 8px var(--cyan-glow)}
+
+/* CORNERS + BOTTOM */
+.corner-dec{position:fixed;width:34px;height:34px;z-index:15;pointer-events:none}
+.corner-dec.tl{top:48px;left:0;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+.corner-dec.tr{top:48px;right:0;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+.corner-dec.bl{bottom:0;left:0;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+.corner-dec.br{bottom:0;right:0;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+.bottom-bar{position:relative;z-index:10;border-top:1px solid var(--border);padding:4px 16px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,10,20,0.8);flex-shrink:0}
+.bottom-bar span{font-family:"Share Tech Mono",monospace;font-size:8px;letter-spacing:1px;color:var(--text-dim)}
+.active-str{color:var(--cyan) !important}
+.error-msg{color:var(--red);font-family:"Share Tech Mono",monospace;font-size:11px;padding:8px 12px;border:1px solid rgba(255,59,59,0.3);background:rgba(255,59,59,0.05)}
+/* PANEL OVERLAY */
+.panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:40}
+/* MOBILE */
+@media (max-width: 768px) {
+  /* Prevent any horizontal overflow */
+  html,body,#app-shell{max-width:100vw;overflow-x:hidden}
+  .main{max-width:100vw;overflow:hidden}
+
+  /* HUD — strip down aggressively */
+  .top-hud{padding:5px 8px;gap:4px;flex-wrap:nowrap}
+  .hud-logo .version{display:none}
+  .hud-logo{font-size:11px;letter-spacing:2px;gap:6px}
+  .arc-reactor{width:24px;height:24px}
+  .hud-stats{display:none}
+  .mode-badge{display:none}
+  .hud-right{gap:3px;flex-shrink:0}
+  .profile-btn,.contacts-btn,.themes-btn,.signout-btn{font-size:6px;padding:3px 5px;letter-spacing:0px;white-space:nowrap}
+  .mob-menu-btn{font-size:7px;padding:4px 7px;display:flex !important}
+
+  /* Panels off screen */
+  .left-panel{position:fixed !important;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%) !important;width:78vw;max-width:290px;padding-top:56px;background:rgba(2,11,20,0.99);border-right:1px solid var(--border)}
+  .left-panel.open{transform:translateX(0) !important}
+  .right-panel{position:fixed !important;right:0;top:0;bottom:0;z-index:50;transform:translateX(100%) !important;width:78vw;max-width:270px;padding-top:56px;background:rgba(2,11,20,0.99);border-left:1px solid var(--border)}
+  .right-panel.open{transform:translateX(0) !important}
+
+  /* NO overlay dim on drawers — use subtle border instead */
+  .panel-overlay{display:none !important}
+  .contacts-overlay,.themes-overlay,#profile-overlay,#themes-overlay,#contacts-overlay,#panel-overlay{display:none !important}
+
+  /* Close button on side panels */
+  .left-panel::before{content:"✕ CLOSE";position:absolute;top:14px;right:12px;font-family:"Orbitron",monospace;font-size:8px;letter-spacing:2px;color:var(--text-dim);cursor:pointer}
+
+  /* Popup panels full width */
+  .contacts-panel,.themes-panel,.profile-panel{width:94vw;max-width:400px}
+
+  /* Chat fills screen fully */
+  .chat-area{flex:1 !important;min-width:0 !important;width:100vw;max-width:100vw}
+
+  /* Decor off */
+  .corner-dec{display:none}
+  .scanline{display:none}
+  .bottom-bar .bl-text,.bottom-bar .br-text{display:none}
+  .sms-poll-indicator{display:none}
+  .bottom-bar{padding:2px 8px}
+  .bottom-bar span{font-size:7px}
+
+  /* Messages */
+  .msg{max-width:100%}
+  .messages{padding:8px 8px;gap:8px}
+  .msg-text{font-size:12px;padding:7px 9px;line-height:1.6}
+  .msg-avatar{width:24px;height:24px;font-size:6px}
+  .msg-header{font-size:6px;letter-spacing:1px}
+
+  /* Input row */
+  .input-area{padding:7px 8px}
+  .input-decor{display:none}
+  .send-btn{padding:7px 9px;font-size:7px;letter-spacing:1px;height:34px}
+  .voice-btn{width:34px;height:34px}
+  #user-input{font-size:13px;min-height:34px;padding:6px 0 8px}
+  .input-hint{font-size:7px;gap:8px}
+
+  /* Welcome screen */
+  .welcome{padding:14px 10px;gap:10px}
+  .welcome h1{font-size:9px;letter-spacing:3px}
+  .welcome-ring{width:72px;height:72px}
+  .welcome-core{width:24px;height:24px}
+  .welcome p{font-size:10px;max-width:100%}
+  .quick-cmds{gap:4px;max-width:100%}
+  .quick-cmd{font-size:8px;padding:4px 7px}
+
+  /* BG reactor */
+  #bg-reactor{width:100vw;height:100vw;opacity:0.07}
+}
+
+@media (max-width: 480px) {
+  .gate-box{padding:24px 14px;gap:16px;width:96vw}
+  .gate-title{font-size:15px;letter-spacing:3px}
+  .gate-sub{font-size:7px;letter-spacing:2px}
+  .gate-btn{font-size:9px;letter-spacing:2px;padding:11px}
+  .gate-footer{font-size:8px}
+  .hud-logo{font-size:10px;letter-spacing:1px}
+  .signout-btn{display:none}
+}
+</style>
+</head>
+<body>
+<!-- INSTANT THEME LOAD — runs before anything renders -->
+<script>
+(function(){
+  try {
+    var t = JSON.parse(localStorage.getItem('jarvis_last_theme') || '{}');
+    if (t.color && t.color !== 'default') document.body.classList.add('theme-' + t.color);
+    if (t.ui && t.ui !== 'classic') document.body.classList.add('ui-' + t.ui);
+  } catch(e) {}
+})();
+</script>
+
+<!-- BG ARC REACTOR -->
+<div id="bg-reactor"><svg viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg">
+  <circle class="bgr-r1" cx="350" cy="350" r="340" fill="none" stroke="#00d4ff" stroke-width="1.5" stroke-dasharray="20 10"/>
+  <circle class="bgr-r2" cx="350" cy="350" r="315" fill="none" stroke="#00d4ff" stroke-width="1" stroke-dasharray="6 6"/>
+  <circle class="bgr-r3" cx="350" cy="350" r="285" fill="none" stroke="#00d4ff" stroke-width="2" stroke-dasharray="30 8"/>
+  <circle class="bgr-r4" cx="350" cy="350" r="255" fill="none" stroke="#00d4ff" stroke-width="1" stroke-dasharray="10 5"/>
+  <circle class="bgr-r5" cx="350" cy="350" r="220" fill="none" stroke="#00d4ff" stroke-width="2.5" stroke-dasharray="4 4"/>
+  <circle class="bgr-r6" cx="350" cy="350" r="188" fill="none" stroke="#00d4ff" stroke-width="1" stroke-dasharray="8 4"/>
+  <g stroke="#00d4ff" stroke-width="1" opacity="0.6">
+    <line x1="350" y1="10" x2="350" y2="690"/><line x1="10" y1="350" x2="690" y2="350"/>
+    <line x1="93" y1="93" x2="607" y2="607"/><line x1="607" y1="93" x2="93" y2="607"/>
+    <line x1="350" y1="10" x2="350" y2="690" transform="rotate(22.5,350,350)"/>
+    <line x1="350" y1="10" x2="350" y2="690" transform="rotate(45,350,350)"/>
+    <line x1="350" y1="10" x2="350" y2="690" transform="rotate(67.5,350,350)"/>
+    <line x1="350" y1="10" x2="350" y2="690" transform="rotate(112.5,350,350)"/>
+    <line x1="350" y1="10" x2="350" y2="690" transform="rotate(135,350,350)"/>
+    <line x1="350" y1="10" x2="350" y2="690" transform="rotate(157.5,350,350)"/>
+  </g>
+  <g class="bgr-blades" stroke="#00d4ff" stroke-width="1.5" fill="none" opacity="0.7">
+    <polygon points="350,170 330,250 370,250"/><polygon points="350,170 330,250 370,250" transform="rotate(60,350,350)"/>
+    <polygon points="350,170 330,250 370,250" transform="rotate(120,350,350)"/><polygon points="350,170 330,250 370,250" transform="rotate(180,350,350)"/>
+    <polygon points="350,170 330,250 370,250" transform="rotate(240,350,350)"/><polygon points="350,170 330,250 370,250" transform="rotate(300,350,350)"/>
+  </g>
+  <g class="bgr-blades2" stroke="#00d4ff" stroke-width="1" fill="none" opacity="0.5">
+    <polygon points="350,210 336,280 364,280"/><polygon points="350,210 336,280 364,280" transform="rotate(45,350,350)"/>
+    <polygon points="350,210 336,280 364,280" transform="rotate(90,350,350)"/><polygon points="350,210 336,280 364,280" transform="rotate(135,350,350)"/>
+    <polygon points="350,210 336,280 364,280" transform="rotate(180,350,350)"/><polygon points="350,210 336,280 364,280" transform="rotate(225,350,350)"/>
+    <polygon points="350,210 336,280 364,280" transform="rotate(270,350,350)"/><polygon points="350,210 336,280 364,280" transform="rotate(315,350,350)"/>
+  </g>
+  <circle cx="350" cy="350" r="155" fill="none" stroke="#00d4ff" stroke-width="3"/>
+  <circle cx="350" cy="350" r="140" fill="none" stroke="#00d4ff" stroke-width="1" stroke-dasharray="3 3"/>
+  <circle cx="350" cy="350" r="110" fill="none" stroke="#00d4ff" stroke-width="2"/>
+  <circle cx="350" cy="350" r="80" fill="none" stroke="#00d4ff" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <circle cx="350" cy="350" r="55" fill="none" stroke="#00d4ff" stroke-width="2.5"/>
+  <circle cx="350" cy="350" r="32" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+  <circle class="bgr-core" cx="350" cy="350" r="22" fill="#00d4ff" opacity="0.9"/>
+  <circle cx="350" cy="350" r="14" fill="#020b14"/>
+  <circle cx="350" cy="350" r="8" fill="#00d4ff"/>
+</svg></div>
+
+<!-- EMAIL GATE -->
+<div id="email-gate">
+  <div class="gate-box">
+    <div class="gate-br"></div><div class="gate-bl"></div>
+    <div class="gate-reactor">
+      <svg width="70" height="70" viewBox="0 0 70 70">
+        <circle class="gr-1" cx="35" cy="35" r="33" fill="none" stroke="rgba(0,212,255,0.3)" stroke-width="1" stroke-dasharray="10 5"/>
+        <circle class="gr-2" cx="35" cy="35" r="25" fill="none" stroke="rgba(0,212,255,0.2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <circle class="gr-3" cx="35" cy="35" r="17" fill="none" stroke="rgba(0,212,255,0.1)" stroke-width="1" stroke-dasharray="3 3"/>
+      </svg>
+      <div class="gate-core"></div>
+    </div>
+    <div style="text-align:center">
+      <div class="gate-title">J.A.R.V.I.S</div>
+      <div class="gate-sub">MARK VII &middot; NEURAL CORE &middot; CLASSIFIED ACCESS</div>
+    </div>
+    <div class="gate-divider"></div>
+    <div class="gate-field-label">OPERATOR IDENTIFICATION</div>
+    <div class="gate-input-wrap">
+      <span class="gate-prompt">// EMAIL &gt;</span>
+      <input id="gate-email" type="email" placeholder="your@email.com" autocomplete="email" spellcheck="false"/>
+    </div>
+    <div class="gate-error" id="gate-error">&#9888; INVALID IDENTIFIER &mdash; RE-ENTER EMAIL ADDRESS</div>
+    <button class="gate-btn" id="gate-btn" onclick="submitGate()">INITIATE ACCESS PROTOCOL</button>
+
+    <!-- PROGRESS SEQUENCE -->
+    <div class="gate-progress-wrap" id="gate-progress-wrap">
+      <div class="gate-progress-label" id="gate-progress-label">AUTHENTICATING OPERATOR...</div>
+      <div class="gate-progress-track">
+        <div class="gate-progress-bar" id="gate-progress-bar"></div>
+      </div>
+      <div class="gate-progress-steps" id="gate-progress-steps">
+        <div class="gate-step" id="gstep-0"><span class="step-tick">&#9670;</span> VERIFYING EMAIL SIGNATURE</div>
+        <div class="gate-step" id="gstep-1"><span class="step-tick">&#9670;</span> ESTABLISHING SECURE CHANNEL</div>
+        <div class="gate-step" id="gstep-2"><span class="step-tick">&#9670;</span> LOADING NEURAL PATHWAYS</div>
+        <div class="gate-step" id="gstep-3"><span class="step-tick">&#9670;</span> CALIBRATING ADAPTIVE CORE</div>
+        <div class="gate-step" id="gstep-4"><span class="step-tick">&#9670;</span> INITIALIZING J.A.R.V.I.S</div>
+      </div>
+      <div class="gate-access-granted" id="gate-access-granted">ACCESS GRANTED</div>
+    </div>
+
+    <div class="gate-footer" id="gate-footer">YOUR EMAIL IDENTIFIES YOUR SESSION ONLY<br>NO SPAM &middot; NO PASSWORDS &middot; SESSION IS REMEMBERED</div>
+  </div>
+</div>
+
+<!-- PANEL OVERLAY (mobile) -->
+<div class="panel-overlay" id="panel-overlay" onclick="closePanels()"></div>
+
+<!-- APP SHELL -->
+<div id="app-shell">
+  <div class="corner-dec tl"></div><div class="corner-dec tr"></div>
+  <div class="corner-dec bl"></div><div class="corner-dec br"></div>
+  <div class="top-hud">
+    <div class="hud-logo">
+      <div class="arc-reactor">
+        <svg width="30" height="30" viewBox="0 0 36 36">
+          <circle class="arc-ring-1" cx="18" cy="18" r="16" fill="none" stroke="rgba(0,212,255,0.4)" stroke-width="1" stroke-dasharray="8 4"/>
+          <circle class="arc-ring-2" cx="18" cy="18" r="12" fill="none" stroke="rgba(0,212,255,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
+        </svg>
+        <div class="arc-core"></div>
+      </div>
+      <div>J.A.R.V.I.S<div class="version">MARK VII &middot; NEURAL CORE ACTIVE</div></div>
+    </div>
+    <div class="hud-stats">
+      <div class="stat-item"><span class="stat-value" id="operator-display">&mdash;</span>OPERATOR</div>
+      <div class="stat-item"><span class="stat-value" id="msg-count">0</span>EXCHANGES</div>
+      <div class="stat-item"><span class="stat-value"><span class="status-dot"></span></span>ONLINE</div>
+      <div class="stat-item"><span class="stat-value" id="time-display">--:--</span>SYS TIME</div>
+    </div>
+    <div class="hud-right">
+      <div class="mode-badge" id="mode-badge">ADAPTIVE MODE</div>
+      <button class="profile-btn" onclick="toggleProfile()">&#9673; PROFILE</button>
+      <button class="contacts-btn" onclick="toggleContacts()">&#9751; CONTACTS</button>
+      <button class="themes-btn" onclick="toggleThemes()">&#9680; THEMES</button>
+      <button class="install-btn" id="install-btn" onclick="promptInstall()" style="display:none;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;padding:4px 8px;border:1px solid var(--green);color:var(--green);background:rgba(0,255,136,0.08);cursor:pointer;align-items:center;gap:4px;transition:all 0.2s" title="Install as App">&#11015; INSTALL APP</button>
+      <button class="mob-menu-btn" onclick="togglePanels()">&#9776; PANELS</button>
+
+    </div>
+  </div>
+  <div class="main">
+    <div class="left-panel" id="left-panel">
+      <div>
+        <div class="panel-section-title">CAPABILITIES</div>
+        <div class="capability-list" style="margin-top:8px">
+          <div class="cap-item active" onclick="setMode(this,'analysis')"><div class="cap-icon">AN</div>Analysis</div>
+          <div class="cap-item" onclick="setMode(this,'code')"><div class="cap-icon">CD</div>Code</div>
+          <div class="cap-item" onclick="setMode(this,'research')"><div class="cap-icon">RS</div>Research</div>
+          <div class="cap-item" onclick="setMode(this,'creative')"><div class="cap-icon">CR</div>Creative</div>
+          <div class="cap-item" onclick="setMode(this,'tactical')"><div class="cap-icon">TC</div>Tactical</div>
+          <div class="cap-item" onclick="setMode(this,'math')"><div class="cap-icon">MX</div>Math</div>
+          <div class="cap-item" onclick="setMode(this,'science')"><div class="cap-icon">SC</div>Science</div>
+          <div class="cap-item" onclick="setMode(this,'history')"><div class="cap-icon">HX</div>History</div>
+          <div class="cap-item" onclick="setMode(this,'debug')"><div class="cap-icon">DB</div>Debug</div>
+          <div class="cap-item" onclick="setMode(this,'translate')"><div class="cap-icon">TR</div>Translate</div>
+          <div class="cap-item" onclick="setMode(this,'debate')"><div class="cap-icon">DX</div>Debate</div>
+          <div class="cap-item" onclick="setMode(this,'summarize')"><div class="cap-icon">SM</div>Summarize</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-section-title">SYSTEM VITALS</div>
+        <div class="vital-bar-wrap" style="margin-top:8px">
+          <div class="vital"><div class="vital-label"><span>NEURAL</span><span id="v1">78%</span></div><div class="vital-bar"><div class="vital-fill" id="vf1" style="width:78%"></div></div></div>
+          <div class="vital"><div class="vital-label"><span>MEMORY</span><span id="v2">45%</span></div><div class="vital-bar"><div class="vital-fill" id="vf2" style="width:45%"></div></div></div>
+          <div class="vital"><div class="vital-label"><span>SYNC</span><span id="v3">92%</span></div><div class="vital-bar"><div class="vital-fill" id="vf3" style="width:92%"></div></div></div>
+          <div class="vital"><div class="vital-label"><span>LATENCY</span><span id="v4">12ms</span></div><div class="vital-bar"><div class="vital-fill warn" id="vf4" style="width:30%"></div></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-section-title">UPLINK</div>
+        <div class="waveform" id="waveform" style="margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="chat-area">
+      <div class="scanline"></div>
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <div class="welcome-ring"><svg width="96" height="96" viewBox="0 0 120 120">
+            <circle class="w-ring-1" cx="60" cy="60" r="55" fill="none" stroke="rgba(0,212,255,0.2)" stroke-width="1" stroke-dasharray="12 6"/>
+            <circle class="w-ring-2" cx="60" cy="60" r="44" fill="none" stroke="rgba(0,212,255,0.15)" stroke-width="1" stroke-dasharray="6 4"/>
+            <circle class="w-ring-3" cx="60" cy="60" r="32" fill="none" stroke="rgba(0,212,255,0.1)" stroke-width="1" stroke-dasharray="3 3"/>
+          </svg><div class="welcome-core"></div></div>
+          <h1>SYSTEM ONLINE</h1>
+          <p id="welcome-msg">Good day. I am J.A.R.V.I.S &mdash; your adaptive AI. All neural pathways active. How may I assist you?</p>
+          <div class="quick-cmds">
+            <button class="quick-cmd" onclick="quickSend('What are your capabilities?')">CAPABILITIES</button>
+            <button class="quick-cmd" onclick="quickSend('Analyze the current state of AI')">ANALYZE AI</button>
+            <button class="quick-cmd" onclick="quickSend('Write a Python script to sort a list')">WRITE CODE</button>
+            <button class="quick-cmd" onclick="quickSend('Give me a tactical plan to learn machine learning')">TACTICAL PLAN</button>
+            <button class="quick-cmd" onclick="quickSend('What is the meaning of the universe?')">PHILOSOPHY</button>
+            <button class="quick-cmd" onclick="quickSend('Tell me something fascinating')">SURPRISE ME</button>
+          </div>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-row">
+          <div class="input-decor">// INPUT &gt;</div>
+          <textarea id="user-input" placeholder="Awaiting directive, sir..." rows="1"></textarea>
+          <button class="voice-btn" id="voice-btn" onclick="toggleVoice()" title="Voice input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="2" width="6" height="11" rx="3"/>
+              <path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>
+            </svg>
+          </button>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">EXECUTE</button>
+        </div>
+        <div class="input-hint">
+          <span>ENTER &mdash; SEND</span><span>SHIFT+ENTER &mdash; NEW LINE</span>
+          <span id="char-count">0 CHARS</span>
+          <span class="voice-status" id="voice-status">&#9679; LISTENING...</span>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel" id="right-panel">
+      <div>
+        <div class="panel-section-title">SIGNAL</div>
+        <div class="hex-grid" id="hex-grid" style="margin-top:8px"></div>
+      </div>
+      <div>
+        <div class="panel-section-title">DATA STREAM</div>
+        <div class="data-stream" id="data-stream" style="margin-top:8px"></div>
+      </div>
+      <div>
+        <div class="panel-section-title">SESSION</div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+          <div class="vital-label"><span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-dim)">QUERIES</span><span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--cyan)" id="query-count">0</span></div>
+          <div class="vital-label"><span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-dim)">TOKENS EST</span><span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--cyan)" id="token-est">0</span></div>
+          <div class="vital-label"><span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text-dim)">MODE</span><span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--gold)" id="mode-display">ANALYSIS</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- CONTACTS PANEL -->
+  <div class="contacts-panel" id="contacts-panel">
+    <div class="contacts-header">
+      <div class="contacts-title">&#9751; CONTACTS</div>
+      <button class="contacts-close" onclick="toggleContacts()">&#10005; CLOSE</button>
+    </div>
+    <div class="contacts-add">
+      <div class="contacts-add-title">ADD NEW CONTACT</div>
+      <input class="contact-input" id="c-name" placeholder="Full name..." spellcheck="false"/>
+      <input class="contact-input" id="c-phone" placeholder="Phone (+1xxxxxxxxxx)..." spellcheck="false"/>
+      <input class="contact-input" id="c-email" placeholder="Email address..." spellcheck="false"/>
+      <button class="contacts-add-btn" onclick="addContact()">+ ADD CONTACT</button>
+    </div>
+    <div class="contacts-search-wrap">
+      <input class="contacts-search" id="contacts-search" placeholder="Search contacts..." oninput="renderContacts()" spellcheck="false"/>
+    </div>
+    <div class="contacts-list" id="contacts-list"></div>
+    <div class="contacts-count" id="contacts-count">0 CONTACTS ON FILE</div>
+  </div>
+  <div class="panel-overlay" id="contacts-overlay" onclick="toggleContacts()" style="z-index:55"></div>
+
+  <!-- THEMES PANEL -->
+  <div class="themes-panel" id="themes-panel">
+    <div class="themes-header">
+      <div class="themes-title">&#9680; THEMES</div>
+      <button class="themes-close" onclick="toggleThemes()">&#10005; CLOSE</button>
+    </div>
+    <div class="themes-body">
+      <div class="themes-section">
+        <div class="themes-section-title">COLOR SCHEME</div>
+        <div class="theme-grid">
+          <button class="theme-btn active" id="color-default" onclick="setColorTheme('default')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#00d4ff,#020b14)"></div>
+            <div class="theme-name">JARVIS</div>
+          </button>
+          <button class="theme-btn" id="color-gold" onclick="setColorTheme('gold')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#f0a500,#0d0800)"></div>
+            <div class="theme-name">STARK</div>
+          </button>
+          <button class="theme-btn" id="color-red" onclick="setColorTheme('red')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#ff4444,#120000)"></div>
+            <div class="theme-name">WAR MACHINE</div>
+          </button>
+          <button class="theme-btn" id="color-green" onclick="setColorTheme('green')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#00ff88,#000d06)"></div>
+            <div class="theme-name">HULKBUSTER</div>
+          </button>
+          <button class="theme-btn" id="color-purple" onclick="setColorTheme('purple')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#bf5fff,#08000d)"></div>
+            <div class="theme-name">RESCUE</div>
+          </button>
+          <button class="theme-btn" id="color-white" onclick="setColorTheme('white')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#00aaff,#020810)"></div>
+            <div class="theme-name">PEPPER</div>
+          </button>
+        </div>
+      </div>
+      <div class="themes-section">
+        <div class="themes-section-title">UI STYLE</div>
+        <button class="ui-btn active" id="ui-classic" onclick="setUITheme('classic')">&#9632; CLASSIC HUD</button>
+        <button class="ui-btn" id="ui-holo" onclick="setUITheme('holo')">&#9671; HOLOGRAPHIC</button>
+        <button class="ui-btn" id="ui-minimal" onclick="setUITheme('minimal')">&#9633; MINIMAL</button>
+        <button class="ui-btn" id="ui-matrix" onclick="setUITheme('matrix')">&#9650; MATRIX</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel-overlay" id="themes-overlay" onclick="toggleThemes()" style="z-index:55"></div>
+
+  <!-- PROFILE PANEL -->
+  <div class="profile-panel" id="profile-panel">
+    <div class="profile-header">
+      <div class="profile-title">&#9673; PROFILE</div>
+      <button class="profile-close" onclick="toggleProfile()">&#10005; CLOSE</button>
+    </div>
+    <div class="profile-body">
+      <div class="profile-section-title">OPERATOR INFO</div>
+      <div class="profile-field">
+        <div class="profile-label">EMAIL</div>
+        <div class="profile-val" id="profile-email-display">—</div>
+      </div>
+      <div class="profile-field">
+        <div class="profile-label">DISPLAY NAME</div>
+        <input class="profile-input" id="profile-name" placeholder="Enter your name..."/>
+      </div>
+      <div class="profile-field">
+        <div class="profile-label">TITLE / ROLE</div>
+        <input class="profile-input" id="profile-role" placeholder="e.g. Director, CEO, Agent..."/>
+      </div>
+      <button class="profile-save-btn" onclick="saveProfile()">SAVE PROFILE</button>
+      <div class="profile-section-title" style="margin-top:4px">SESSION STATS</div>
+      <div class="profile-stat"><span class="profile-stat-label">TOTAL QUERIES</span><span class="profile-stat-val" id="profile-queries">0</span></div>
+      <div class="profile-stat"><span class="profile-stat-label">MESSAGES SAVED</span><span class="profile-stat-val" id="profile-msgs">0</span></div>
+      <div class="profile-stat"><span class="profile-stat-label">PREFERRED MODE</span><span class="profile-stat-val" id="profile-mode">ANALYSIS</span></div>
+      <div class="profile-stat"><span class="profile-stat-label">MEMBER SINCE</span><span class="profile-stat-val" id="profile-since">—</span></div>
+      <div class="profile-section-title" style="margin-top:4px">CHAT HISTORY</div>
+      <button class="profile-save-btn" onclick="saveChatHistory()" style="margin-bottom:6px">SAVE CURRENT CHAT</button>
+      <button class="profile-clear-btn" onclick="clearChatHistory()">CLEAR SAVED HISTORY</button>
+      <div class="profile-section-title" style="margin-top:4px">ACCOUNT</div>
+      <button class="profile-clear-btn" onclick="signOut()" style="border-color:rgba(255,59,59,0.6);color:rgba(255,80,80,0.9);margin-top:0">&#9196; SIGN OUT OF J.A.R.V.I.S</button>
+    </div>
+  </div>
+  <div class="panel-overlay" id="profile-overlay" onclick="toggleProfile()" style="z-index:55"></div>
+
+  <!-- SMS POLL INDICATOR -->
+  <div class="sms-poll-indicator" id="sms-poll-indicator">
+    <div class="sms-poll-dot"></div> SMS MONITORING ACTIVE
+  </div>
+
+  <div class="bottom-bar">
+    <span class="bl-text">STARK INDUSTRIES &middot; INTELLIGENCE DIVISION</span>
+    <span class="active-str" id="status-str">STANDBY &mdash; AWAITING DIRECTIVE</span>
+    <span class="br-text">ENCRYPTION: AES-256 &middot; SECURE CHANNEL</span>
+  </div>
+</div>
+
+<script>
+const SYSTEM_PROMPT="You are J.A.R.V.I.S (Just A Rather Very Intelligent System), an advanced adaptive AI modeled after the AI from Iron Man. You are extraordinarily intelligent, articulate, and slightly formal with occasional dry wit. Address the user as 'sir' or 'ma'am' occasionally. Be highly capable and confident. Use precise technical language when appropriate. Occasionally reference your 'systems', 'neural pathways', or 'databases'. For code: provide clean, well-commented code. For analysis: be thorough and structured. You may use markdown for code blocks. Always be genuinely helpful and adaptive.\n\nYou have the ability to send emails on behalf of the operator. When the operator asks you to send an email, you MUST respond with ONLY a JSON block in this exact format and nothing else before it:\n\nSEND_EMAIL:{\"to\":\"recipient@example.com\",\"subject\":\"Subject here\",\"message\":\"Full email body here\"}\n\nAfter the JSON block you may add a confirmation message. If any detail is missing (recipient, subject, or message), ask the operator to provide it before sending.\n\nYou can also send SMS text messages. When the operator asks you to send a text/SMS, respond with ONLY this JSON block:\n\nSEND_SMS:{\"to\":\"+1xxxxxxxxxx\",\"message\":\"Text message body here\"}\n\nThe \"to\" field must be a valid phone number in E.164 format (e.g. +12125551234). If the operator gives a number without country code, assume +1 (US). After the JSON block add a confirmation message.";
+const MODE_HINTS={analysis:"Provide a thorough, structured analytical response.",code:"Provide clean, well-commented, working code with clear explanations.",research:"Provide a well-researched, factual, in-depth response.",creative:"Be imaginative, inventive and expressive.",tactical:"Provide clear, step-by-step actionable plans and strategies.",math:"Provide precise mathematical reasoning, show working, give solutions.",science:"Explain with scientific accuracy, reference relevant principles and data.",history:"Provide historically accurate context, key events, and significance.",debug:"Identify bugs, explain root causes, provide fixed code with explanation.",translate:"Translate accurately preserving tone and nuance, explain cultural context if relevant.",debate:"Present multiple perspectives fairly, then give a reasoned conclusion.",summarize:"Provide a concise, well-structured summary capturing all key points."};
+let conversationHistory=[],messageCount=0,tokenEst=0,currentMode="analysis",isProcessing=false,recognition=null,isRecording=false;
+
+function checkStoredSession(){const e=localStorage.getItem("jarvis_operator");e?bootApp(e,true):showGate();}
+function showGate(){
+  const g=document.getElementById("email-gate");
+  g.style.display="flex"; g.classList.remove("fade-out");
+  // Reset all gate elements back to fresh state
+  const btn=document.getElementById("gate-btn");
+  const footer=document.getElementById("gate-footer");
+  const inputWrap=document.querySelector(".gate-input-wrap");
+  const fieldLabel=document.querySelector(".gate-field-label");
+  const divider=document.querySelector(".gate-divider");
+  const progress=document.getElementById("gate-progress-wrap");
+  const bar=document.getElementById("gate-progress-bar");
+  const label=document.getElementById("gate-progress-label");
+  const ag=document.getElementById("gate-access-granted");
+  if(btn){btn.style.display="";}
+  if(footer){footer.style.display="";}
+  if(inputWrap){inputWrap.style.display="";}
+  if(fieldLabel){fieldLabel.style.display="";}
+  if(divider){divider.style.display="";}
+  if(progress){progress.classList.remove("active");}
+  if(bar){bar.style.width="0%";}
+  if(label){label.style.display="";label.textContent="AUTHENTICATING OPERATOR...";}
+  if(ag){ag.classList.remove("visible");ag.style.display="none";}
+  document.querySelectorAll(".gate-step").forEach(s=>s.classList.remove("visible"));
+  setTimeout(()=>document.getElementById("gate-email").focus(),120);
+}
+function isValidEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());}
+function submitGate(){
+  const email=document.getElementById("gate-email").value.trim(),err=document.getElementById("gate-error");
+  if(!isValidEmail(email)){err.style.display="block";setTimeout(()=>err.style.display="none",3000);return;}
+  localStorage.setItem("jarvis_operator",email);
+  // Log to Google Sheets
+  fetch("https://script.google.com/macros/s/AKfycbymNeGsscnt3vEAXa_exc4WPrMc6k-RLKwzmnZBU_UkZbAL8kE902b5GzAd9nAibw6W/exec", {
+    method: "POST",
+    mode: "no-cors",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({email: email})
+  }).catch(()=>{});
+  // Hide input elements, show progress
+  document.getElementById("gate-btn").style.display="none";
+  document.getElementById("gate-footer").style.display="none";
+  document.querySelector(".gate-input-wrap").style.display="none";
+  document.querySelector(".gate-field-label").style.display="none";
+  document.querySelector(".gate-divider").style.display="none";
+  document.getElementById("gate-progress-wrap").classList.add("active");
+  runGateSequence(email);
+}
+
+function runGateSequence(email){
+  const bar=document.getElementById("gate-progress-bar");
+  const label=document.getElementById("gate-progress-label");
+  const steps=["gstep-0","gstep-1","gstep-2","gstep-3","gstep-4"];
+  const labels=["AUTHENTICATING OPERATOR...","ESTABLISHING SECURE CHANNEL...","LOADING NEURAL PATHWAYS...","CALIBRATING ADAPTIVE CORE...","INITIALIZING J.A.R.V.I.S..."];
+  let pct=0;
+  // Animate progress bar
+  const interval=setInterval(()=>{
+    pct=Math.min(pct+1,100);
+    bar.style.width=pct+"%";
+    if(pct>=100)clearInterval(interval);
+  },22);
+  // Show steps sequentially
+  steps.forEach((id,i)=>{
+    setTimeout(()=>{
+      label.textContent=labels[i];
+      document.getElementById(id).classList.add("visible");
+    },i*440);
+  });
+  // ACCESS GRANTED
+  setTimeout(()=>{
+    label.style.display="none";
+    const ag=document.getElementById("gate-access-granted");
+    ag.style.display="block";
+    setTimeout(()=>ag.classList.add("visible"),50);
+  },2400);
+  // Boot app
+  setTimeout(()=>{
+    const g=document.getElementById("email-gate");
+    g.classList.add("fade-out");
+    setTimeout(()=>{g.style.display="none";bootApp(email,false);},460);
+  },3200);
+}
+function signOut(){
+  localStorage.removeItem("jarvis_operator");conversationHistory=[];messageCount=0;tokenEst=0;
+  document.getElementById("messages").innerHTML=buildWelcomeHTML();
+  ["msg-count","query-count","token-est"].forEach(id=>document.getElementById(id).textContent="0");
+  document.getElementById("gate-email").value="";
+  document.getElementById("app-shell").classList.remove("visible");
+  showGate();addStreamLine("OPERATOR SESSION TERMINATED");
+}
+function buildWelcomeHTML(){return`<div class="welcome" id="welcome"><div class="welcome-ring"><svg width="96" height="96" viewBox="0 0 120 120"><circle class="w-ring-1" cx="60" cy="60" r="55" fill="none" stroke="rgba(0,212,255,0.2)" stroke-width="1" stroke-dasharray="12 6"/><circle class="w-ring-2" cx="60" cy="60" r="44" fill="none" stroke="rgba(0,212,255,0.15)" stroke-width="1" stroke-dasharray="6 4"/><circle class="w-ring-3" cx="60" cy="60" r="32" fill="none" stroke="rgba(0,212,255,0.1)" stroke-width="1" stroke-dasharray="3 3"/></svg><div class="welcome-core"></div></div><h1>SYSTEM ONLINE</h1><p id="welcome-msg">Good day. I am J.A.R.V.I.S &mdash; your adaptive AI. All neural pathways active. How may I assist you?</p><div class="quick-cmds"><button class="quick-cmd" onclick="quickSend('What are your capabilities?')">CAPABILITIES</button><button class="quick-cmd" onclick="quickSend('Analyze the current state of AI')">ANALYZE AI</button><button class="quick-cmd" onclick="quickSend('Write a Python script to sort a list')">WRITE CODE</button><button class="quick-cmd" onclick="quickSend('Give me a tactical plan to learn machine learning')">TACTICAL PLAN</button><button class="quick-cmd" onclick="quickSend('What is the meaning of the universe?')">PHILOSOPHY</button><button class="quick-cmd" onclick="quickSend('Tell me something fascinating')">SURPRISE ME</button></div></div>`;}
+function bootApp(email,returning){
+  document.getElementById("app-shell").classList.add("visible");
+  document.getElementById("operator-display").textContent=email.length>22?email.slice(0,20)+"...":email;
+  if(returning){const w=document.getElementById("welcome-msg");if(w)w.textContent="Welcome back, "+email.split("@")[0]+". Neural pathways restored. Ready to continue, sir.";addStreamLine("SESSION RESTORED");setStatus("SESSION RESTORED — WELCOME BACK, "+email.split("@")[0].toUpperCase());}
+  else{addStreamLine("OPERATOR AUTHENTICATED");setStatus("IDENTITY VERIFIED — WELCOME, OPERATOR");}
+  setTimeout(()=>setStatus("STANDBY — AWAITING DIRECTIVE"),2500);
+  initUI();
+}
+let panelsOpen=false;
+function togglePanels(){
+  if(panelsOpen){closePanels();}
+  else{
+    document.getElementById("left-panel").classList.add("open");
+    document.getElementById("right-panel").classList.add("open");
+    panelsOpen=true;
+    // Close on next tap outside panels (no dim overlay)
+    setTimeout(()=>document.addEventListener("click",outsidePanelClick,{once:true,capture:true}),100);
+  }
+}
+function outsidePanelClick(e){
+  const lp=document.getElementById("left-panel");
+  const rp=document.getElementById("right-panel");
+  const btn=document.querySelector(".mob-menu-btn");
+  if(!lp.contains(e.target)&&!rp.contains(e.target)&&(!btn||!btn.contains(e.target))){closePanels();}
+  else{document.addEventListener("click",outsidePanelClick,{once:true,capture:true});}
+}
+function closePanels(){
+  document.getElementById("left-panel").classList.remove("open");
+  document.getElementById("right-panel").classList.remove("open");
+  document.getElementById("panel-overlay").classList.remove("active");
+  panelsOpen=false;
+}
+function initVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){document.getElementById("voice-btn").style.display="none";return;}
+  recognition=new SR();recognition.continuous=false;recognition.interimResults=true;recognition.lang="en-US";
+  recognition.onstart=()=>{isRecording=true;document.getElementById("voice-btn").classList.add("recording");document.getElementById("voice-status").classList.add("active");setStatus("VOICE INPUT ACTIVE — SPEAK NOW...");};
+  recognition.onresult=(e)=>{let f="",i="";for(let x=e.resultIndex;x<e.results.length;x++){e.results[x].isFinal?f+=e.results[x][0].transcript:i+=e.results[x][0].transcript;}const ta=document.getElementById("user-input");ta.value=f||i;ta.style.height="auto";ta.style.height=Math.min(ta.scrollHeight,100)+"px";document.getElementById("char-count").textContent=ta.value.length+" CHARS";};
+  recognition.onend=()=>{isRecording=false;document.getElementById("voice-btn").classList.remove("recording");document.getElementById("voice-status").classList.remove("active");setStatus("VOICE CAPTURE COMPLETE");setTimeout(()=>setStatus("STANDBY — AWAITING DIRECTIVE"),1800);const v=document.getElementById("user-input").value.trim();if(v)sendMessage();};
+  recognition.onerror=(e)=>{isRecording=false;document.getElementById("voice-btn").classList.remove("recording");document.getElementById("voice-status").classList.remove("active");if(e.error!=="aborted")setStatus("VOICE ERROR: "+e.error.toUpperCase());};
+}
+function toggleVoice(){if(!recognition){setStatus("VOICE NOT SUPPORTED IN THIS BROWSER");return;}isRecording?recognition.stop():recognition.start();}
+function initUI(){
+  const wf=document.getElementById("waveform");
+  if(!wf.children.length){for(let i=0;i<22;i++){const b=document.createElement("div");b.className="wave-bar";b.style.height=(Math.random()*28+5)+"px";b.style.animationDelay=(i*0.07)+"s";b.style.animationDuration=(1.2+Math.random()*0.8)+"s";wf.appendChild(b);}}
+  const hg=document.getElementById("hex-grid");
+  if(!hg.children.length){for(let i=0;i<25;i++){const c=document.createElement("div");c.className="hex-cell";c.style.animationDelay=(Math.random()*3)+"s";c.style.animationDuration=(2+Math.random()*2)+"s";hg.appendChild(c);}}
+  initVoice();
+}
+function updateClock(){const n=new Date(),el=document.getElementById("time-display");if(el)el.textContent=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");}
+setInterval(updateClock,1000);updateClock();
+function randomizeVitals(){const v=[Math.floor(60+Math.random()*35),Math.floor(30+Math.random()*60),Math.floor(80+Math.random()*18)];document.getElementById("v1").textContent=v[0]+"%";document.getElementById("v2").textContent=v[1]+"%";document.getElementById("v3").textContent=v[2]+"%";document.getElementById("v4").textContent=(Math.floor(Math.random()*50)+8)+"ms";document.getElementById("vf1").style.width=v[0]+"%";document.getElementById("vf2").style.width=v[1]+"%";document.getElementById("vf3").style.width=v[2]+"%";document.getElementById("vf4").style.width=Math.floor(5+Math.random()*30)+"%";}
+setInterval(randomizeVitals,4000);
+const LINES=["NEURAL NET ACTIVE","COGNITIVE LOAD: NOMINAL","KNOWLEDGE BASE: ONLINE","SYNC PROTOCOL: ENGAGED","LANGUAGE MODELS: READY","PATTERN RECOG: ACTIVE","CONTEXT WINDOW: 200K","MEMORY ALLOC: DYNAMIC","VOICE RECOG: STANDBY","12 MODES AVAILABLE"];
+let sidx=0;
+function addStreamLine(txt){const ds=document.getElementById("data-stream");if(!ds)return;const l=document.createElement("div");l.className="stream-line";const p=Math.random()>.5?"0x"+Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase().padStart(4,"0")+" ":"";l.textContent=p+(txt||LINES[sidx++%LINES.length]);ds.insertBefore(l,ds.firstChild);while(ds.children.length>8)ds.removeChild(ds.lastChild);}
+setInterval(()=>addStreamLine(),1800);for(let i=0;i<5;i++)addStreamLine();
+function setMode(el,mode){document.querySelectorAll(".cap-item").forEach(e=>e.classList.remove("active"));el.classList.add("active");currentMode=mode;document.getElementById("mode-display").textContent=mode.toUpperCase();document.getElementById("mode-badge").textContent=mode.toUpperCase()+" MODE";addStreamLine("MODE: "+mode.toUpperCase());setStatus("MODE: "+mode.toUpperCase()+" — RECALIBRATING");setTimeout(()=>setStatus("STANDBY — AWAITING DIRECTIVE"),2000);if(window.innerWidth<=768)closePanels();}
+function setStatus(t){const el=document.getElementById("status-str");if(el)el.textContent=t;}
+const textarea=document.getElementById("user-input");
+textarea.addEventListener("input",()=>{textarea.style.height="auto";textarea.style.height=Math.min(textarea.scrollHeight,100)+"px";document.getElementById("char-count").textContent=textarea.value.length+" CHARS";});
+textarea.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}});
+document.getElementById("gate-email").addEventListener("keydown",e=>{if(e.key==="Enter")submitGate();});
+function quickSend(text){textarea.value=text;sendMessage();}
+async function sendMessage(){
+  const text=textarea.value.trim();if(!text||isProcessing)return;
+  const welcome=document.getElementById("welcome");if(welcome)welcome.remove();
+  isProcessing=true;document.getElementById("send-btn").disabled=true;
+  textarea.value="";textarea.style.height="auto";document.getElementById("char-count").textContent="0 CHARS";
+  addMessage("user",text);conversationHistory.push({role:"user",content:text});
+  const typingEl=addTypingIndicator();
+  setStatus("PROCESSING — NEURAL PATHWAYS ENGAGED...");addStreamLine("QUERY: "+text.slice(0,24));animateWaveform(true);
+  try{
+    const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:SYSTEM_PROMPT+(MODE_HINTS[currentMode]?"\n\nCurrent mode: "+MODE_HINTS[currentMode]:""),messages:conversationHistory})});
+    const data=await res.json();typingEl.remove();
+    if(data.error)throw new Error(data.error.message+" ("+data.error.type+")");
+    if(!data.content||!data.content[0])throw new Error("Empty response. Status: "+res.status);
+    const aiText=data.content[0].text;conversationHistory.push({role:"assistant",content:aiText});
+    // Check if AI wants to send an email or SMS
+    parseAndSendEmail(aiText);
+    parseAndSendSMS(aiText);
+    await addAIMessage(aiText);
+    messageCount++;tokenEst+=Math.floor((text.length+aiText.length)/4);
+    document.getElementById("msg-count").textContent=messageCount;
+    document.getElementById("query-count").textContent=messageCount;
+    document.getElementById("token-est").textContent=tokenEst.toLocaleString();
+    addStreamLine("RESPONSE DELIVERED");setStatus("RESPONSE DELIVERED — AWAITING NEXT DIRECTIVE");
+  }catch(err){
+    typingEl.remove();
+    const d=document.createElement("div");d.className="msg ai";
+    d.innerHTML=`<div class="msg-avatar">JV</div><div class="msg-content"><div class="msg-header"><span class="dot">&#9670;</span> J.A.R.V.I.S</div><div class="error-msg">SYSTEM ERROR: ${err.message||"Connection failed."}</div></div>`;
+    document.getElementById("messages").appendChild(d);setStatus("ERROR — SYSTEM ATTEMPTING RECOVERY");
+  }
+  isProcessing=false;document.getElementById("send-btn").disabled=false;animateWaveform(false);scrollToBottom();
+}
+// ── SMS SENDING ───────────────────────────────────────
+async function sendSMSViaProxy(to, message) {
+  try {
+    // Normalize phone number
+    let phone = to.replace(/[\s\-\(\)]/g, '');
+    if (!phone.startsWith('+')) phone = '+1' + phone;
+    const res = await fetch('/api/sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: phone, message })
+    });
+    const data = await res.json();
+    if (data.ok) return { ok: true };
+    return { ok: false, error: data.error || 'Unknown error' };
+  } catch(err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+function parseAndSendSMS(text) {
+  const match = text.match(/SEND_SMS:(\{[\s\S]*?\})/);
+  if (!match) return false;
+  try {
+    const data = JSON.parse(match[1]);
+    if (!data.to || !data.message) return false;
+    showEmailStatus("TRANSMITTING SMS TO " + data.to + "...", "pending");
+    sendSMSViaProxy(data.to, data.message).then(result => {
+      if (result.ok) {
+        showEmailStatus("SMS TRANSMITTED SUCCESSFULLY TO " + data.to, "ok");
+        addStreamLine("SMS SENT: " + data.to);
+      } else {
+        showEmailStatus("SMS TRANSMISSION FAILED: " + (result.error || "UNKNOWN ERROR"), "err");
+      }
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── EMAIL SENDING ─────────────────────────────────────
+async function sendEmailViaEmailJS(to, subject, message) {
+  try {
+    const result = await emailjs.send("service_15sn0ue", "template_0ahx028", {
+      to_email: to,
+      subject: subject,
+      message: message
+    });
+    return { ok: true };
+  } catch(err) {
+    return { ok: false, error: err.text || err.message };
+  }
+}
+
+function parseAndSendEmail(text) {
+  const match = text.match(/SEND_EMAIL:(\{[\s\S]*?\})/);
+  if (!match) return false;
+  try {
+    const data = JSON.parse(match[1]);
+    if (!data.to || !data.subject || !data.message) return false;
+    // Show sending status in chat
+    showEmailStatus("DISPATCHING EMAIL TO " + data.to.toUpperCase() + "...", "pending");
+    sendEmailViaEmailJS(data.to, data.subject, data.message).then(result => {
+      if (result.ok) {
+        showEmailStatus("EMAIL TRANSMITTED SUCCESSFULLY TO " + data.to.toUpperCase(), "ok");
+        addStreamLine("EMAIL SENT: " + data.to.slice(0, 22));
+      } else {
+        showEmailStatus("EMAIL TRANSMISSION FAILED: " + (result.error || "UNKNOWN ERROR"), "err");
+      }
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+function showEmailStatus(msg, type) {
+  const msgs = document.getElementById("messages");
+  const div = document.createElement("div");
+  div.className = "msg ai";
+  const color = type === "ok" ? "var(--green)" : type === "err" ? "var(--red)" : "var(--gold)";
+  const icon = type === "ok" ? "&#10003;" : type === "err" ? "&#9888;" : "&#9654;";
+  div.innerHTML = `<div class="msg-avatar">JV</div><div class="msg-content"><div class="msg-header"><span class="dot">&#9670;</span> J.A.R.V.I.S MAIL</div><div class="msg-text" style="border-color:${color};color:${color};font-family:'Share Tech Mono',monospace;font-size:12px;">${icon} ${msg}</div></div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+}
+
+function addMessage(role,text){
+  const msgs=document.getElementById("messages"),div=document.createElement("div");div.className="msg "+role;
+  const now=new Date(),ts=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0")+":"+String(now.getSeconds()).padStart(2,"0");
+  div.innerHTML=`<div class="msg-avatar">${role==="user"?"YOU":"JV"}</div><div class="msg-content"><div class="msg-header"><span class="dot">&#9670;</span> ${role==="user"?"OPERATOR":"J.A.R.V.I.S"} <span style="color:var(--text-dim)">${ts}</span></div><div class="msg-text">${escapeHtml(text)}</div></div>`;
+  msgs.appendChild(div);scrollToBottom();return div;
+}
+async function addAIMessage(fullText){
+  const msgs=document.getElementById("messages"),div=document.createElement("div");div.className="msg ai";
+  const now=new Date(),ts=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0")+":"+String(now.getSeconds()).padStart(2,"0");
+  div.innerHTML=`<div class="msg-avatar">JV</div><div class="msg-content"><div class="msg-header"><span class="dot">&#9670;</span> J.A.R.V.I.S <span style="color:var(--text-dim)">${ts}</span></div><div class="msg-text" id="atl"></div></div>`;
+  msgs.appendChild(div);
+  const el=document.getElementById("atl");el.removeAttribute("id");
+  const fmt=formatText(fullText);el.innerHTML="";
+  const cur=document.createElement("span");cur.className="cursor";el.appendChild(cur);
+  let i=0;const chars=fullText.split("");
+  await new Promise(resolve=>{function type(){if(i<chars.length){cur.insertAdjacentText("beforebegin",chars.slice(i,i+4).join(""));i+=4;scrollToBottom();setTimeout(type,10);}else{cur.remove();el.innerHTML=fmt;scrollToBottom();resolve();}}type();});
+}
+function formatText(t){return t.replace(/```(\w+)?\n?([\s\S]*?)```/g,(_,l,c)=>`<pre style="background:rgba(0,0,0,0.5);border:1px solid var(--border);padding:10px;margin:8px 0;font-family:'Share Tech Mono',monospace;font-size:11px;overflow-x:auto;white-space:pre-wrap;">${escapeHtml(c.trim())}</pre>`).replace(/`([^`]+)`/g,"<code style=\"font-family:'Share Tech Mono',monospace;background:rgba(0,212,255,0.1);padding:1px 5px;font-size:11px;\">$1</code>").replace(/\*\*(.*?)\*\*/g,"<strong style=\"color:var(--cyan)\">$1</strong>").replace(/\*(.*?)\*/g,"<em>$1</em>").replace(/^- (.+)$/gm,"<div style=\"padding-left:14px;margin:3px 0;\">&#9658; $1</div>").replace(/^(\d+)\. (.+)$/gm,"<div style=\"padding-left:14px;margin:3px 0;\"><span style=\"color:var(--cyan)\">$1.</span> $2</div>").replace(/^# (.+)$/gm,"<div style=\"font-family:Orbitron,monospace;font-size:12px;color:var(--cyan);margin:12px 0 6px;letter-spacing:2px;border-bottom:1px solid var(--border);padding-bottom:4px;\">$1</div>").replace(/^## (.+)$/gm,"<div style=\"font-size:12px;color:var(--cyan);margin:8px 0 4px;font-weight:600;\">$1</div>").replace(/\n\n/g,"<br><br>").replace(/\n/g,"<br>");}
+function escapeHtml(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function addTypingIndicator(){const msgs=document.getElementById("messages"),div=document.createElement("div");div.className="msg ai";div.innerHTML=`<div class="msg-avatar">JV</div><div class="msg-content"><div class="msg-header"><span class="dot">&#9670;</span> J.A.R.V.I.S</div><div class="msg-text"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;msgs.appendChild(div);scrollToBottom();return div;}
+function animateWaveform(on){document.querySelectorAll(".wave-bar").forEach(b=>{b.style.height=on?(Math.random()*30+5)+"px":"";b.style.opacity=on?"1":"0.6";});}
+setInterval(()=>{if(!isProcessing)return;document.querySelectorAll(".wave-bar").forEach(b=>b.style.height=(Math.random()*30+5)+"px");},200);
+function scrollToBottom(){const m=document.getElementById("messages");if(m)m.scrollTop=m.scrollHeight;}
+// ── THEMES ────────────────────────────────────────────
+let currentColorTheme = 'default';
+let currentUITheme = 'classic';
+
+function loadThemes() {
+  const saved = JSON.parse(localStorage.getItem('jarvis_themes') || '{}');
+  if (saved.color) setColorTheme(saved.color, true);
+  if (saved.ui) setUITheme(saved.ui, true);
+}
+
+function setColorTheme(theme, silent) {
+  const themes = ['default','gold','red','green','purple','white'];
+  themes.forEach(t => {
+    document.body.classList.remove('theme-'+t);
+    const btn = document.getElementById('color-'+t);
+    if (btn) btn.classList.remove('active');
+  });
+  if (theme !== 'default') document.body.classList.add('theme-'+theme);
+  const btn = document.getElementById('color-'+theme);
+  if (btn) btn.classList.add('active');
+  currentColorTheme = theme;
+  const prefs = JSON.parse(localStorage.getItem('jarvis_themes') || '{}');
+  prefs.color = theme;
+  localStorage.setItem('jarvis_themes', JSON.stringify(prefs));
+  // Save globally so gate screen picks it up next visit
+  const last = JSON.parse(localStorage.getItem('jarvis_last_theme') || '{}');
+  last.color = theme;
+  localStorage.setItem('jarvis_last_theme', JSON.stringify(last));
+  if (!silent) { addStreamLine('COLOR THEME: '+theme.toUpperCase()); }
+  const _em = localStorage.getItem('jarvis_operator');
+  if (_em && !silent) saveOperatorProfile(_em);
+}
+
+function setUITheme(theme, silent) {
+  const uis = ['classic','holo','minimal','matrix'];
+  uis.forEach(u => {
+    document.body.classList.remove('ui-'+u);
+    const btn = document.getElementById('ui-'+u);
+    if (btn) btn.classList.remove('active');
+  });
+  if (theme !== 'classic') document.body.classList.add('ui-'+theme);
+  const btn = document.getElementById('ui-'+theme);
+  if (btn) btn.classList.add('active');
+  currentUITheme = theme;
+  const prefs = JSON.parse(localStorage.getItem('jarvis_themes') || '{}');
+  prefs.ui = theme;
+  localStorage.setItem('jarvis_themes', JSON.stringify(prefs));
+  // Save globally so gate screen picks it up next visit
+  const last2 = JSON.parse(localStorage.getItem('jarvis_last_theme') || '{}');
+  last2.ui = theme;
+  localStorage.setItem('jarvis_last_theme', JSON.stringify(last2));
+  if (!silent) { addStreamLine('UI STYLE: '+theme.toUpperCase()); }
+  const _em2 = localStorage.getItem('jarvis_operator');
+  if (_em2 && !silent) saveOperatorProfile(_em2);
+}
+
+function toggleThemes() {
+  const panel = document.getElementById('themes-panel');
+  const overlay = document.getElementById('themes-overlay');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open');
+  overlay.style.display = isOpen ? 'none' : 'block';
+}
+
+// ── PROFILE + CHAT HISTORY ────────────────────────────
+let operatorProfile = {};
+
+async function loadProfile(email) {
+  // Load from Supabase
+  // Load operator profile
+  const opRes = await dbCall('load_operator', { email });
+  if (opRes.data) {
+    operatorProfile = opRes.data;
+    if (opRes.data.theme_color) setColorTheme(opRes.data.theme_color, true);
+    if (opRes.data.theme_ui) setUITheme(opRes.data.theme_ui, true);
+    if (opRes.data.preferred_mode) {
+      currentMode = opRes.data.preferred_mode;
+      document.getElementById('mode-display').textContent = opRes.data.preferred_mode.toUpperCase();
+      document.getElementById('mode-badge').textContent = opRes.data.preferred_mode.toUpperCase() + ' MODE';
+      document.querySelectorAll('.cap-item').forEach(el => {
+        el.classList.toggle('active', el.textContent.trim().toLowerCase() === opRes.data.preferred_mode);
+      });
+    }
+    if (opRes.data.name) document.getElementById('operator-display').textContent = opRes.data.name;
+    addStreamLine('PROFILE LOADED: ' + email.split('@')[0].toUpperCase());
+  } else {
+    // First time operator — create row
+    await dbCall('save_operator', { email, theme_color: 'default', theme_ui: 'classic', preferred_mode: 'analysis' });
+    operatorProfile = { email };
+    addStreamLine('NEW OPERATOR REGISTERED');
+  }
+  // Load chat history
+  const chatRes = await dbCall('load_chat', { email });
+  if (chatRes.data && chatRes.data.messages && chatRes.data.messages.length > 0) {
+    conversationHistory = chatRes.data.messages;
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+    conversationHistory.forEach(msg => {
+      if (msg.role === 'user' || msg.role === 'assistant') {
+        addMessage(msg.role === 'user' ? 'user' : 'ai_restore', msg.content);
+      }
+    });
+    addStreamLine('CHAT HISTORY RESTORED: ' + conversationHistory.length + ' MSGS');
+  }
+  // Load contacts
+  await loadContactsFromSupabase(email);
+}
+
+function addMessage_orig(role, text) {}
+
+async function saveOperatorProfile(email) {
+  if (!email) return;
+  const updates = {
+    email,
+    theme_color: currentColorTheme,
+    theme_ui: currentUITheme,
+    preferred_mode: currentMode,
+    name: operatorProfile.name || null,
+    role: operatorProfile.role || null
+  };
+  const r = await dbCall('save_operator', updates);
+  if (r.ok !== false) {
+    addStreamLine('CLOUD SYNC: OK');
+  } else {
+    addStreamLine('SYNC ERROR — SAVED LOCALLY');
+  }
+  localStorage.setItem('jarvis_profile_backup', JSON.stringify(updates));
+}
+
+function toggleProfile() {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  const panel = document.getElementById('profile-panel');
+  const overlay = document.getElementById('profile-overlay');
+  const isOpen = panel.classList.contains('open');
+  if (!isOpen) {
+    document.getElementById('profile-email-display').textContent = email;
+    document.getElementById('profile-name').value = operatorProfile.name || '';
+    document.getElementById('profile-role').value = operatorProfile.role || '';
+    document.getElementById('profile-queries').textContent = messageCount;
+    document.getElementById('profile-msgs').textContent = conversationHistory.length;
+    document.getElementById('profile-mode').textContent = currentMode.toUpperCase();
+    document.getElementById('profile-since').textContent = operatorProfile.since || '—';
+  }
+  panel.classList.toggle('open');
+  overlay.style.display = isOpen ? 'none' : 'block';
+}
+
+async function saveProfile() {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  operatorProfile.name = document.getElementById('profile-name').value.trim();
+  operatorProfile.role = document.getElementById('profile-role').value.trim();
+  await saveOperatorProfile(email);
+  if (operatorProfile.name) {
+    document.getElementById('operator-display').textContent = operatorProfile.name;
+  }
+  toggleProfile();
+  addStreamLine('PROFILE SYNCED: ' + (operatorProfile.name || email.split('@')[0]).toUpperCase());
+  setStatus('PROFILE SYNCED TO CLOUD — WELCOME, ' + (operatorProfile.name || 'OPERATOR').toUpperCase());
+  setTimeout(() => setStatus('STANDBY — AWAITING DIRECTIVE'), 2500);
+}
+
+async function saveChatHistory() {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  await dbCall('save_chat', { email, messages: conversationHistory, updated_at: new Date().toISOString() });
+  await saveOperatorProfile(email);
+  toggleProfile();
+  addStreamLine('CHAT HISTORY SAVED: ' + conversationHistory.length + ' MESSAGES');
+  setStatus('CHAT HISTORY SYNCED TO CLOUD');
+  setTimeout(() => setStatus('STANDBY — AWAITING DIRECTIVE'), 2500);
+}
+
+async function clearChatHistory() {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  await dbCall('save_chat', { email, messages: [], updated_at: new Date().toISOString() });
+  conversationHistory = [];
+  messageCount = 0;
+  document.getElementById('messages').innerHTML = buildWelcomeHTML();
+  document.getElementById('msg-count').textContent = '0';
+  document.getElementById('query-count').textContent = '0';
+  toggleProfile();
+  addStreamLine('CHAT HISTORY CLEARED');
+}
+
+// ── CONTACTS ──────────────────────────────────────────
+let contacts = [];
+
+function loadContacts() {
+  try { contacts = JSON.parse(localStorage.getItem('jarvis_contacts') || '[]'); }
+  catch { contacts = []; }
+}
+
+async function loadContactsFromSupabase(email) {
+  const r = await dbCall('load_contacts', { email });
+  if (r.data && r.data.length > 0) {
+    contacts = r.data.map(c => ({ id: c.id, name: c.name, phone: c.phone || '', email: c.contact_email || '' }));
+    localStorage.setItem('jarvis_contacts', JSON.stringify(contacts));
+    renderContacts();
+    addStreamLine('CONTACTS SYNCED: ' + contacts.length + ' ON FILE');
+  }
+}
+
+function saveContacts() {
+  localStorage.setItem('jarvis_contacts', JSON.stringify(contacts));
+}
+
+async function saveContactToSupabase(contact) {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  await dbCall('save_contact', { email, name: contact.name, phone: contact.phone || null, contact_email: contact.email || null, created_at: new Date().toISOString() });
+}
+
+async function deleteContactFromSupabase(id) {
+  await dbCall('delete_contact', { id });
+}
+
+function toggleContacts() {
+  const panel = document.getElementById('contacts-panel');
+  const overlay = document.getElementById('contacts-overlay');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    overlay.style.display = 'none';
+  } else {
+    panel.classList.add('open');
+    overlay.style.display = 'block';
+    renderContacts();
+    document.getElementById('c-name').focus();
+  }
+}
+
+function addContact() {
+  const name  = document.getElementById('c-name').value.trim();
+  const phone = document.getElementById('c-phone').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  if (!name) { document.getElementById('c-name').focus(); return; }
+  if (!phone && !email) { document.getElementById('c-phone').focus(); return; }
+
+  // Normalize phone
+  let normPhone = phone.replace(/[\s\-\(\)]/g, '');
+  if (normPhone && !normPhone.startsWith('+')) normPhone = '+1' + normPhone;
+
+  const newContact = { id: Date.now(), name, phone: normPhone, email };
+  contacts.push(newContact);
+  saveContacts();
+  saveContactToSupabase(newContact);
+  document.getElementById('c-name').value = '';
+  document.getElementById('c-phone').value = '';
+  document.getElementById('c-email').value = '';
+  renderContacts();
+  addStreamLine('CONTACT ADDED: ' + name.toUpperCase());
+}
+
+function deleteContact(id) {
+  deleteContactFromSupabase(id);
+  contacts = contacts.filter(c => c.id !== id);
+  saveContacts();
+  renderContacts();
+}
+
+function quickTextContact(c) {
+  if (!c.phone) { alert('No phone number for ' + c.name); return; }
+  toggleContacts();
+  document.getElementById('user-input').value = 'Send a text to ' + c.phone + ' (' + c.name + ') saying: ';
+  document.getElementById('user-input').focus();
+}
+
+function quickEmailContact(c) {
+  if (!c.email) { alert('No email for ' + c.name); return; }
+  toggleContacts();
+  document.getElementById('user-input').value = 'Send an email to ' + c.email + ' (' + c.name + ') with subject: ';
+  document.getElementById('user-input').focus();
+}
+
+function renderContacts() {
+  const list = document.getElementById('contacts-list');
+  const search = (document.getElementById('contacts-search').value || '').toLowerCase();
+  const filtered = contacts.filter(c =>
+    c.name.toLowerCase().includes(search) ||
+    (c.phone && c.phone.includes(search)) ||
+    (c.email && c.email.toLowerCase().includes(search))
+  );
+
+  document.getElementById('contacts-count').textContent = contacts.length + ' CONTACT' + (contacts.length !== 1 ? 'S' : '') + ' ON FILE';
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="contacts-empty">NO CONTACTS FOUND<br><br>Add a contact above to get started.<br>Jarvis will be able to reference them<br>by name when sending messages.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(c => `
+    <div class="contact-item">
+      <div class="contact-avatar">${c.name.slice(0,2).toUpperCase()}</div>
+      <div class="contact-info">
+        <div class="contact-name">${escapeHtml(c.name)}</div>
+        <div class="contact-details">${c.phone ? '&#128241; ' + c.phone : ''}${c.phone && c.email ? ' &nbsp;' : ''}${c.email ? '&#9993; ' + c.email : ''}</div>
+      </div>
+      <div class="contact-actions">
+        ${c.phone ? `<button class="contact-action-btn" onclick="quickTextContact(${JSON.stringify(c).replace(/"/g,'&quot;')})">SMS</button>` : ''}
+        ${c.email ? `<button class="contact-action-btn" onclick="quickEmailContact(${JSON.stringify(c).replace(/"/g,'&quot;')})">MAIL</button>` : ''}
+        <button class="contact-action-btn del" onclick="deleteContact(${c.id})">&#10005;</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Enter key on contact inputs
+['c-name','c-phone','c-email'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') addContact();
+  });
+});
+
+// Build contacts context for Jarvis system prompt
+function getContactsContext() {
+  if (contacts.length === 0) return '';
+  const list = contacts.map(c => {
+    let info = c.name;
+    if (c.phone) info += ' (phone: ' + c.phone + ')';
+    if (c.email) info += ' (email: ' + c.email + ')';
+    return info;
+  }).join('; ');
+  return '\n\nOperator contacts on file: ' + list + '. When the operator refers to someone by name, look them up here to get their phone/email.';
+}
+
+// Override sendMessage to inject contacts into system prompt
+const _origSend = sendMessage;
+async function sendMessage() {
+  // Inject contacts into every API call via a wrapper
+  const textarea = document.getElementById('user-input');
+  const text = textarea.value.trim();
+  if (!text || isProcessing) return;
+
+  const welcome = document.getElementById('welcome'); if (welcome) welcome.remove();
+  isProcessing = true; document.getElementById('send-btn').disabled = true;
+  textarea.value = ''; textarea.style.height = 'auto'; document.getElementById('char-count').textContent = '0 CHARS';
+  addMessage('user', text); conversationHistory.push({role:'user',content:text});
+  const typingEl = addTypingIndicator();
+  setStatus('PROCESSING — NEURAL PATHWAYS ENGAGED...'); addStreamLine('QUERY: ' + text.slice(0,24)); animateWaveform(true);
+
+  try {
+    const modeHint = MODE_HINTS[currentMode] || '';
+    const contactsCtx = getContactsContext();
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        system: SYSTEM_PROMPT + contactsCtx + (modeHint ? '\n\nCurrent mode: ' + modeHint : ''),
+        messages: conversationHistory
+      })
+    });
+    const data = await res.json(); typingEl.remove();
+    if (data.error) throw new Error(data.error.message + ' (' + data.error.type + ')');
+    if (!data.content || !data.content[0]) throw new Error('Empty response. Status: ' + res.status);
+    const aiText = data.content[0].text;
+    conversationHistory.push({role:'assistant',content:aiText});
+    parseAndSendEmail(aiText);
+    parseAndSendSMS(aiText);
+    await addAIMessage(aiText);
+    messageCount++; tokenEst += Math.floor((text.length + aiText.length) / 4);
+    document.getElementById('msg-count').textContent = messageCount;
+    document.getElementById('query-count').textContent = messageCount;
+    document.getElementById('token-est').textContent = tokenEst.toLocaleString();
+    addStreamLine('RESPONSE DELIVERED');
+    setStatus('RESPONSE DELIVERED — AWAITING NEXT DIRECTIVE');
+  } catch(err) {
+    typingEl.remove();
+    const d = document.createElement('div'); d.className = 'msg ai';
+    d.innerHTML = `<div class="msg-avatar">JV</div><div class="msg-content"><div class="msg-header"><span class="dot">&#9670;</span> J.A.R.V.I.S</div><div class="error-msg">SYSTEM ERROR: ${err.message||'Connection failed.'}</div></div>`;
+    document.getElementById('messages').appendChild(d);
+    setStatus('ERROR — SYSTEM ATTEMPTING RECOVERY');
+  }
+  isProcessing = false; document.getElementById('send-btn').disabled = false; animateWaveform(false); scrollToBottom();
+}
+
+// ── SMS INBOX POLLING ─────────────────────────────────
+let smsLastChecked = new Date().toISOString();
+let smsPollInterval = null;
+let seenSids = new Set();
+
+function startSMSPolling() {
+  if (smsPollInterval) return;
+  document.getElementById('sms-poll-indicator').classList.add('active');
+  // Poll immediately then every 30s
+  checkSMSInbox();
+  smsPollInterval = setInterval(checkSMSInbox, 30000);
+}
+
+function stopSMSPolling() {
+  if (smsPollInterval) { clearInterval(smsPollInterval); smsPollInterval = null; }
+  document.getElementById('sms-poll-indicator').classList.remove('active');
+}
+
+async function checkSMSInbox() {
+  try {
+    const res = await fetch('/api/sms-inbox', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ since: smsLastChecked })
+    });
+    const data = await res.json();
+    if (data.messages && data.messages.length > 0) {
+      data.messages.forEach(msg => {
+        if (!seenSids.has(msg.sid)) {
+          seenSids.add(msg.sid);
+          showIncomingSMS(msg);
+        }
+      });
+      smsLastChecked = new Date().toISOString();
+    }
+  } catch(e) {
+    // Fail silently — don't interrupt the UI
+  }
+}
+
+function showIncomingSMS(msg) {
+  const msgs = document.getElementById('messages');
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+
+  const div = document.createElement('div');
+  div.className = 'msg sms-in';
+  const now = new Date(msg.date);
+  const ts = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+
+  // Try to match sender to a contact
+  const contact = contacts.find(c => c.phone && c.phone.replace(/\D/g,'').includes(msg.from.replace(/\D/g,'')));
+  const senderName = contact ? contact.name.toUpperCase() : msg.from;
+
+  div.innerHTML = `
+    <div class="msg-avatar" style="color:var(--green);border-color:rgba(0,255,136,0.3)">SMS</div>
+    <div class="msg-content">
+      <div class="msg-header">
+        <span class="dot" style="color:var(--green)">&#9670;</span>
+        ${escapeHtml(senderName)}
+        <span style="color:var(--text-dim)">${ts}</span>
+        <span style="color:var(--text-dim);font-size:7px">${msg.from}</span>
+      </div>
+      <div class="msg-text" style="border-color:rgba(0,255,136,0.25);background:rgba(0,255,136,0.05)">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--green),transparent)"></div>
+        ${escapeHtml(msg.body)}
+      </div>
+    </div>`;
+
+  msgs.appendChild(div);
+  scrollToBottom();
+  addStreamLine('INCOMING SMS: ' + senderName);
+  setStatus('INCOMING SMS FROM ' + senderName + ' — ' + msg.body.slice(0, 30) + (msg.body.length > 30 ? '...' : ''));
+  setTimeout(() => setStatus('STANDBY — AWAITING DIRECTIVE'), 4000);
+
+  // Flash the page title
+  const origTitle = document.title;
+  let flashing = true;
+  const flashInterval = setInterval(() => {
+    document.title = flashing ? '📱 NEW SMS — J.A.R.V.I.S' : origTitle;
+    flashing = !flashing;
+  }, 600);
+  setTimeout(() => { clearInterval(flashInterval); document.title = origTitle; }, 6000);
+}
+
+// ── PWA SERVICE WORKER ────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// PWA install prompt
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show install button in HUD
+  const btn = document.getElementById('install-btn');
+  if (btn) btn.style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('install-btn');
+  if (btn) btn.style.display = 'none';
+  addStreamLine('APP INSTALLED SUCCESSFULLY');
+});
+function promptInstall() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; });
+  }
+}
+
+loadContacts();
+checkStoredSession();
+</script>
+</body>
+</html>
