@@ -1441,7 +1441,7 @@ document.getElementById('memory-input').addEventListener('keydown', e => {
 });
 
 // ── MEMORY ────────────────────────────────────────────
-let memories = [];
+
 
 async function loadMemories(email) {
   const r = await dbCall('load_memories', { email });
