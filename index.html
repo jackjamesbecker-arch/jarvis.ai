@@ -266,6 +266,63 @@ body::after{content:"";position:fixed;top:50%;left:50%;transform:translate(-50%,
 .sms-poll-indicator.active { opacity: 1; }
 .sms-poll-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: blink 1s ease-in-out infinite; }
 
+/* MEMORY PANEL */
+.memory-panel{position:fixed;right:0;top:0;bottom:0;width:320px;z-index:60;background:rgba(2,11,20,0.98);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s ease}
+.memory-panel.open{transform:translateX(0)}
+.memory-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.memory-title{font-family:"Orbitron",monospace;font-size:11px;letter-spacing:4px;color:var(--cyan)}
+.memory-close{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:"Orbitron",monospace;font-size:8px;padding:4px 8px;cursor:pointer;transition:all 0.2s}
+.memory-close:hover{border-color:var(--red);color:var(--red)}
+.memory-add{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.memory-add-title{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:3px;color:var(--text-dim)}
+.memory-input{background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:12px;padding:6px 0;width:100%;transition:border-color 0.2s}
+.memory-input::placeholder{color:var(--text-dim)}
+.memory-input:focus{border-bottom-color:var(--cyan)}
+.memory-add-btn{font-family:"Orbitron",monospace;font-size:9px;letter-spacing:2px;padding:8px;background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);cursor:pointer;transition:all 0.2s;width:100%}
+.memory-add-btn:hover{background:rgba(0,212,255,0.25);box-shadow:0 0 10px var(--cyan-glow)}
+.memory-list{flex:1;overflow-y:auto;padding:8px 0;scrollbar-width:thin;scrollbar-color:var(--cyan-glow) transparent}
+.memory-item{padding:10px 16px;border-bottom:1px solid rgba(0,212,255,0.08);display:flex;align-items:flex-start;gap:10px;transition:background 0.2s}
+.memory-item:hover{background:var(--cyan-dim)}
+.memory-text{flex:1;font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--text);line-height:1.5}
+.memory-cat{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:1px;color:var(--text-dim);margin-top:2px}
+.memory-del{background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:2px 4px;transition:color 0.2s;flex-shrink:0}
+.memory-del:hover{color:var(--red)}
+.memory-empty{padding:20px 16px;text-align:center;font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text-dim);line-height:1.8}
+.memory-footer{padding:10px 16px;border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
+.memory-count{font-family:"Share Tech Mono",monospace;font-size:8px;color:var(--text-dim);letter-spacing:1px}
+.memory-clear-btn{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:1px;padding:4px 8px;border:1px solid rgba(255,59,59,0.3);color:rgba(255,100,100,0.7);background:transparent;cursor:pointer;transition:all 0.2s}
+.memory-clear-btn:hover{background:rgba(255,59,59,0.15);color:var(--red);border-color:var(--red)}
+.memory-btn{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:2px;padding:4px 8px;border:1px solid rgba(0,212,255,0.3);color:var(--cyan);background:transparent;cursor:pointer;transition:all 0.2s}
+.memory-btn:hover{background:var(--cyan-dim)}
+
+/* MEMORY PANEL */
+.memory-panel{position:fixed;right:0;top:0;bottom:0;width:320px;z-index:60;background:rgba(2,11,20,0.98);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s ease}
+.memory-panel.open{transform:translateX(0)}
+.memory-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.memory-title{font-family:"Orbitron",monospace;font-size:11px;letter-spacing:4px;color:var(--cyan)}
+.memory-close{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:"Orbitron",monospace;font-size:8px;padding:4px 8px;cursor:pointer;transition:all 0.2s}
+.memory-close:hover{border-color:var(--red);color:var(--red)}
+.memory-add{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+.memory-input{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;color:var(--text);font-family:"Share Tech Mono",monospace;font-size:12px;padding:6px 0;transition:border-color 0.2s;letter-spacing:0.5px}
+.memory-input::placeholder{color:var(--text-dim)}
+.memory-input:focus{border-bottom-color:var(--cyan)}
+.memory-add-btn{font-family:"Orbitron",monospace;font-size:8px;letter-spacing:1px;padding:6px 10px;background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.memory-add-btn:hover{background:rgba(0,212,255,0.25)}
+.memory-list{flex:1;overflow-y:auto;padding:8px 0;scrollbar-width:thin;scrollbar-color:var(--cyan-glow) transparent}
+.memory-item{padding:10px 16px;border-bottom:1px solid rgba(0,212,255,0.08);display:flex;align-items:flex-start;gap:10px;transition:background 0.2s}
+.memory-item:hover{background:var(--cyan-dim)}
+.memory-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);flex-shrink:0;margin-top:5px}
+.memory-text{flex:1;font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--text);line-height:1.6}
+.memory-cat{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:1px;color:var(--text-dim);margin-top:2px}
+.memory-del{background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:2px 4px;transition:color 0.2s;flex-shrink:0}
+.memory-del:hover{color:var(--red)}
+.memory-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.memory-count{font-family:"Share Tech Mono",monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px}
+.memory-clear{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:1px;padding:4px 8px;border:1px solid rgba(255,59,59,0.3);color:rgba(255,100,100,0.7);background:transparent;cursor:pointer;transition:all 0.2s}
+.memory-clear:hover{border-color:var(--red);color:var(--red);background:rgba(255,59,59,0.1)}
+.memory-btn{font-family:"Orbitron",monospace;font-size:7px;letter-spacing:2px;padding:4px 8px;border:1px solid rgba(0,212,255,0.3);color:var(--cyan);background:transparent;cursor:pointer;transition:all 0.2s}
+.memory-btn:hover{background:var(--cyan-dim)}
+
 /* CONTACTS PANEL */
 .contacts-panel{position:fixed;right:0;top:0;bottom:0;width:320px;z-index:60;background:rgba(2,11,20,0.98);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s ease;padding:0}
 .contacts-panel.open{transform:translateX(0)}
@@ -521,6 +578,8 @@ body::after{content:"";position:fixed;top:50%;left:50%;transform:translate(-50%,
     <div class="hud-right">
       <div class="mode-badge" id="mode-badge">ADAPTIVE MODE</div>
       <button class="profile-btn" onclick="toggleProfile()">&#9673; PROFILE</button>
+      <button class="memory-btn" onclick="toggleMemory()">&#9632; MEMORY</button>
+      <button class="memory-btn" onclick="toggleMemory()">&#9881; MEMORY</button>
       <button class="contacts-btn" onclick="toggleContacts()">&#9751; CONTACTS</button>
       <button class="themes-btn" onclick="toggleThemes()">&#9680; THEMES</button>
       <button class="install-btn" id="install-btn" onclick="promptInstall()" style="display:none;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;padding:4px 8px;border:1px solid var(--green);color:var(--green);background:rgba(0,255,136,0.08);cursor:pointer;align-items:center;gap:4px;transition:all 0.2s" title="Install as App">&#11015; INSTALL APP</button>
@@ -620,6 +679,54 @@ body::after{content:"";position:fixed;top:50%;left:50%;transform:translate(-50%,
       </div>
     </div>
   </div>
+  <!-- MEMORY PANEL -->
+  <div class="memory-panel" id="memory-panel">
+    <div class="memory-header">
+      <div class="memory-title">&#9881; NEURAL MEMORY</div>
+      <button class="memory-close" onclick="toggleMemory()">&#10005; CLOSE</button>
+    </div>
+    <div class="memory-add">
+      <div class="memory-add-title">ADD MEMORY</div>
+      <input class="memory-input" id="memory-input" placeholder="Remember that I prefer..." spellcheck="false"/>
+      <select class="memory-input" id="memory-cat" style="cursor:pointer">
+        <option value="general">General</option>
+        <option value="preference">Preference</option>
+        <option value="project">Project</option>
+        <option value="personal">Personal</option>
+        <option value="technical">Technical</option>
+      </select>
+      <button class="memory-add-btn" onclick="addMemory()">+ SAVE TO NEURAL CORE</button>
+    </div>
+    <div class="memory-list" id="memory-list">
+      <div class="memory-empty">No memories stored yet.<br><br>Tell Jarvis to remember something<br>or it will auto-extract facts<br>from your conversations.</div>
+    </div>
+    <div class="memory-footer">
+      <div class="memory-count" id="memory-count">0 MEMORIES</div>
+      <button class="memory-clear-btn" onclick="clearMemories()">CLEAR ALL</button>
+    </div>
+  </div>
+  <div class="panel-overlay" id="memory-overlay" onclick="toggleMemory()" style="z-index:55"></div>
+
+  <!-- MEMORY PANEL -->
+  <div class="memory-panel" id="memory-panel">
+    <div class="memory-header">
+      <div class="memory-title">&#9632; NEURAL MEMORY</div>
+      <button class="memory-close" onclick="toggleMemory()">&#10005; CLOSE</button>
+    </div>
+    <div class="memory-add">
+      <input class="memory-input" id="memory-input" placeholder="Add a memory..." spellcheck="false"/>
+      <button class="memory-add-btn" onclick="addMemoryManual()">+ SAVE</button>
+    </div>
+    <div class="memory-list" id="memory-list">
+      <div style="padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">No memories yet.<br><br>Jarvis will automatically remember<br>key facts from your conversations.</div>
+    </div>
+    <div class="memory-footer">
+      <span class="memory-count" id="memory-count">0 MEMORIES</span>
+      <button class="memory-clear" onclick="clearAllMemories()">CLEAR ALL</button>
+    </div>
+  </div>
+  <div class="panel-overlay" id="memory-overlay" onclick="toggleMemory()" style="z-index:55"></div>
+
   <!-- CONTACTS PANEL -->
   <div class="contacts-panel" id="contacts-panel">
     <div class="contacts-header">
@@ -911,7 +1018,13 @@ async function sendMessage(){
     // Check if AI wants to send an email or SMS
     parseAndSendEmail(aiText);
     parseAndSendSMS(aiText);
+    // Auto-extract memories from conversation
+    if (text.length > 20) autoExtractMemory(text, aiText);
+    // Check if user manually triggered memory
+    if (checkManualMemoryTrigger(text)) addStreamLine('MANUAL MEMORY DETECTED');
     await addAIMessage(aiText);
+    // Auto-extract memories from conversation
+    autoExtractMemories(text, aiText);
     messageCount++;tokenEst+=Math.floor((text.length+aiText.length)/4);
     document.getElementById("msg-count").textContent=messageCount;
     document.getElementById("query-count").textContent=messageCount;
@@ -1214,6 +1327,245 @@ async function clearChatHistory() {
   addStreamLine('CHAT HISTORY CLEARED');
 }
 
+// ── MEMORY ────────────────────────────────────────────
+let memories = [];
+
+async function loadMemories(email) {
+  const r = await dbCall('load_memories', { email });
+  if (r.data && r.data.length > 0) {
+    memories = r.data;
+    renderMemories();
+    addStreamLine('MEMORIES LOADED: ' + memories.length + ' ON FILE');
+  }
+}
+
+function toggleMemory() {
+  const panel = document.getElementById('memory-panel');
+  const overlay = document.getElementById('memory-overlay');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    overlay.style.display = 'none';
+  } else {
+    panel.classList.add('open');
+    overlay.style.display = 'block';
+    renderMemories();
+    setTimeout(() => document.getElementById('memory-input').focus(), 100);
+  }
+}
+
+async function addMemory() {
+  const input = document.getElementById('memory-input');
+  const cat = document.getElementById('memory-cat');
+  const text = input.value.trim();
+  if (!text) return;
+  const email = localStorage.getItem('jarvis_operator') || '';
+  const memory = { email, memory: text, category: cat.value, created_at: new Date().toISOString() };
+  const r = await dbCall('save_memory', memory);
+  if (r.ok !== false) {
+    memories.unshift({ id: r.data?.[0]?.id || Date.now(), memory: text, category: cat.value, created_at: new Date().toISOString() });
+    input.value = '';
+    renderMemories();
+    addStreamLine('MEMORY SAVED: ' + text.slice(0, 24));
+  }
+}
+
+async function deleteMemory(id) {
+  await dbCall('delete_memory', { id });
+  memories = memories.filter(m => m.id !== id);
+  renderMemories();
+}
+
+async function clearMemories() {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  await dbCall('clear_memories', { email });
+  memories = [];
+  renderMemories();
+  addStreamLine('NEURAL MEMORY CLEARED');
+}
+
+function renderMemories() {
+  const list = document.getElementById('memory-list');
+  document.getElementById('memory-count').textContent = memories.length + ' MEMOR' + (memories.length === 1 ? 'Y' : 'IES');
+  if (memories.length === 0) {
+    list.innerHTML = '<div class="memory-empty">No memories stored yet.<br><br>Tell Jarvis to remember something<br>or it will auto-extract facts<br>from your conversations.</div>';
+    return;
+  }
+  list.innerHTML = memories.map(m => `
+    <div class="memory-item">
+      <div style="flex:1">
+        <div class="memory-text">${escapeHtml(m.memory)}</div>
+        <div class="memory-cat">${(m.category || 'general').toUpperCase()}</div>
+      </div>
+      <button class="memory-del" onclick="deleteMemory('${m.id}')" title="Delete">&#10005;</button>
+    </div>`).join('');
+}
+
+function getMemoryContext() {
+  if (memories.length === 0) return '';
+  const list = memories.slice(0, 20).map(m => m.memory).join('; ');
+  return '\n\nThings you remember about this operator: ' + list + '. Use these naturally in conversation when relevant.';
+}
+
+async function autoExtractMemories(userText, aiText) {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  if (!email) return;
+  // Simple keyword-based extraction
+  const combined = userText + ' ' + aiText;
+  const patterns = [
+    { regex: /i (?:am|'m) (?:a |an )?([a-z][a-z\s]+?)(?:\.|,|$)/i, cat: 'personal' },
+    { regex: /i (?:work|working) (?:at|for|on) ([a-z][a-z\s]+?)(?:\.|,|$)/i, cat: 'personal' },
+    { regex: /i (?:prefer|like|love|use|enjoy) ([a-z][a-z\s]+?)(?:\.|,|$)/i, cat: 'preference' },
+    { regex: /my (?:name is|email is|phone is) ([a-z@.\d\s]+?)(?:\.|,|$)/i, cat: 'personal' },
+    { regex: /(?:working on|building|creating|developing) ([a-z][a-z\s]+?)(?:\.|,|$)/i, cat: 'project' },
+    { regex: /remember (?:that )?(.+?)(?:\.|$)/i, cat: 'general' },
+  ];
+  for (const { regex, cat } of patterns) {
+    const match = userText.match(regex);
+    if (match && match[1] && match[1].length > 3 && match[1].length < 100) {
+      const memText = match[0].trim();
+      // Don't duplicate
+      if (!memories.some(m => m.memory.toLowerCase() === memText.toLowerCase())) {
+        const r = await dbCall('save_memory', { email, memory: memText, category: cat, created_at: new Date().toISOString() });
+        if (r.ok !== false) {
+          memories.unshift({ id: r.data?.[0]?.id || Date.now(), memory: memText, category: cat });
+          addStreamLine('AUTO-MEMORY: ' + memText.slice(0, 24));
+        }
+      }
+    }
+  }
+}
+
+document.getElementById('memory-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addMemory();
+});
+
+// ── MEMORY ────────────────────────────────────────────
+let memories = [];
+
+async function loadMemories(email) {
+  const r = await dbCall('load_memories', { email });
+  if (r.data && r.data.length > 0) {
+    memories = r.data;
+    renderMemories();
+    addStreamLine('MEMORIES LOADED: ' + memories.length + ' ON FILE');
+  }
+}
+
+function toggleMemory() {
+  const panel = document.getElementById('memory-panel');
+  const overlay = document.getElementById('memory-overlay');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open');
+  overlay.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) renderMemories();
+}
+
+function renderMemories() {
+  const list = document.getElementById('memory-list');
+  document.getElementById('memory-count').textContent = memories.length + ' MEMOR' + (memories.length === 1 ? 'Y' : 'IES');
+  if (memories.length === 0) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">No memories yet.<br><br>Jarvis will automatically remember<br>key facts from your conversations.</div>';
+    return;
+  }
+  list.innerHTML = memories.map(m => `
+    <div class="memory-item">
+      <div class="memory-dot"></div>
+      <div style="flex:1">
+        <div class="memory-text">${escapeHtml(m.memory)}</div>
+        <div class="memory-cat">${(m.category || 'general').toUpperCase()} &middot; ${new Date(m.created_at).toLocaleDateString()}</div>
+      </div>
+      <button class="memory-del" onclick="deleteMemory('${m.id}')">&#10005;</button>
+    </div>`).join('');
+}
+
+async function addMemoryManual() {
+  const input = document.getElementById('memory-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const email = localStorage.getItem('jarvis_operator') || '';
+  const memory = { email, memory: text, category: 'manual', created_at: new Date().toISOString() };
+  const r = await dbCall('save_memory', memory);
+  if (r.ok !== false) {
+    memory.id = r.data?.[0]?.id || Date.now().toString();
+    memories.unshift(memory);
+    renderMemories();
+    input.value = '';
+    addStreamLine('MEMORY SAVED: ' + text.slice(0, 24));
+  }
+}
+
+async function deleteMemory(id) {
+  await dbCall('delete_memory', { id });
+  memories = memories.filter(m => m.id !== id);
+  renderMemories();
+}
+
+async function clearAllMemories() {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  await dbCall('clear_memories', { email });
+  memories = [];
+  renderMemories();
+  addStreamLine('NEURAL MEMORY CLEARED');
+}
+
+async function autoExtractMemory(userMsg, aiResponse) {
+  const email = localStorage.getItem('jarvis_operator') || '';
+  if (!email) return;
+  // Ask Claude to extract memorable facts
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: 'You are a memory extraction system. Given a conversation snippet, extract any personal facts, preferences, goals, or important information about the user that would be useful to remember for future conversations. Return ONLY a JSON array of strings, each being a concise memory. If there is nothing worth remembering, return an empty array []. Examples of good memories: "Prefers Python over JavaScript", "Working on a machine learning project", "Name is Jackson", "Lives in Phoenix Arizona". Return raw JSON only, no markdown.',
+        messages: [{ role: 'user', content: `User said: "${userMsg}"
+
+Assistant responded: "${aiResponse.slice(0, 500)}"
+
+Extract memorable facts about the user:` }]
+      })
+    });
+    const data = await res.json();
+    if (!data.content || !data.content[0]) return;
+    const text = data.content[0].text.trim();
+    let facts = [];
+    try { facts = JSON.parse(text); } catch { return; }
+    if (!Array.isArray(facts) || facts.length === 0) return;
+    // Save each fact
+    for (const fact of facts.slice(0, 3)) {
+      if (typeof fact !== 'string' || fact.length < 5) continue;
+      const memory = { email, memory: fact, category: 'auto', created_at: new Date().toISOString() };
+      const r = await dbCall('save_memory', memory);
+      if (r.ok !== false) {
+        memory.id = r.data?.[0]?.id || Date.now().toString();
+        memories.unshift(memory);
+        addStreamLine('MEMORY EXTRACTED: ' + fact.slice(0, 24));
+      }
+    }
+    renderMemories();
+  } catch(e) { /* fail silently */ }
+}
+
+function getMemoryContext() {
+  if (memories.length === 0) return '';
+  const recent = memories.slice(0, 20).map(m => m.memory).join('; ');
+  return '
+
+What you remember about this operator: ' + recent + '. Use this context naturally in your responses when relevant.';
+}
+
+// Listen for "remember that" in messages
+function checkManualMemoryTrigger(text) {
+  const lower = text.toLowerCase();
+  const triggers = ['remember that', 'remember i', 'remember my', 'don't forget', 'note that', 'keep in mind'];
+  return triggers.some(t => lower.includes(t));
+}
+
+document.getElementById('memory-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addMemoryManual();
+});
+
 // ── CONTACTS ──────────────────────────────────────────
 let contacts = [];
 
@@ -1372,11 +1724,12 @@ async function sendMessage() {
   try {
     const modeHint = MODE_HINTS[currentMode] || '';
     const contactsCtx = getContactsContext();
+    const memoryCtx = getMemoryContext();
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        system: SYSTEM_PROMPT + contactsCtx + (modeHint ? '\n\nCurrent mode: ' + modeHint : ''),
+        system: SYSTEM_PROMPT + contactsCtx + memoryCtx + (modeHint ? '\n\nCurrent mode: ' + modeHint : ''),
         messages: conversationHistory
       })
     });
@@ -1387,7 +1740,13 @@ async function sendMessage() {
     conversationHistory.push({role:'assistant',content:aiText});
     parseAndSendEmail(aiText);
     parseAndSendSMS(aiText);
+    // Auto-extract memories from conversation
+    if (text.length > 20) autoExtractMemory(text, aiText);
+    // Check if user manually triggered memory
+    if (checkManualMemoryTrigger(text)) addStreamLine('MANUAL MEMORY DETECTED');
     await addAIMessage(aiText);
+    // Auto-extract memories from conversation
+    autoExtractMemories(text, aiText);
     messageCount++; tokenEst += Math.floor((text.length + aiText.length) / 4);
     document.getElementById('msg-count').textContent = messageCount;
     document.getElementById('query-count').textContent = messageCount;
