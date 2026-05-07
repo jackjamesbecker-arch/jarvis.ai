@@ -1331,155 +1331,110 @@ async function clearChatHistory() {
 let memories = [];
 
 async function loadMemories(email) {
-  const r = await dbCall('load_memories', { email });
+  const r = await dbCall("load_memories", { email });
   if (r.data && r.data.length > 0) {
     memories = r.data;
     renderMemories();
-    addStreamLine('MEMORIES LOADED: ' + memories.length + ' ON FILE');
+    addStreamLine("MEMORIES LOADED: " + memories.length + " ON FILE");
   }
 }
 
 function toggleMemory() {
-  const panel = document.getElementById('memory-panel');
-  const overlay = document.getElementById('memory-overlay');
-  const isOpen = panel.classList.contains('open');
-  if (isOpen) {
-    panel.classList.remove('open');
-    overlay.style.display = 'none';
-  } else {
-    panel.classList.add('open');
-    overlay.style.display = 'block';
-    renderMemories();
-    setTimeout(() => document.getElementById('memory-input').focus(), 100);
-  }
-}
-
-async function addMemory() {
-  const input = document.getElementById('memory-input');
-  const cat = document.getElementById('memory-cat');
-  const text = input.value.trim();
-  if (!text) return;
-  const email = localStorage.getItem('jarvis_operator') || '';
-  const memory = { email, memory: text, category: cat.value, created_at: new Date().toISOString() };
-  const r = await dbCall('save_memory', memory);
-  if (r.ok !== false) {
-    memories.unshift({ id: r.data?.[0]?.id || Date.now(), memory: text, category: cat.value, created_at: new Date().toISOString() });
-    input.value = '';
-    renderMemories();
-    addStreamLine('MEMORY SAVED: ' + text.slice(0, 24));
-  }
-}
-
-async function deleteMemory(id) {
-  await dbCall('delete_memory', { id });
-  memories = memories.filter(m => m.id !== id);
-  renderMemories();
-}
-
-async function clearMemories() {
-  const email = localStorage.getItem('jarvis_operator') || '';
-  await dbCall('clear_memories', { email });
-  memories = [];
-  renderMemories();
-  addStreamLine('NEURAL MEMORY CLEARED');
+  const panel = document.getElementById("memory-panel");
+  const overlay = document.getElementById("memory-overlay");
+  const isOpen = panel.classList.contains("open");
+  panel.classList.toggle("open");
+  overlay.style.display = isOpen ? "none" : "block";
+  if (!isOpen) renderMemories();
 }
 
 function renderMemories() {
   const list = document.getElementById("memory-list");
-  document.getElementById("memory-count").textContent = memories.length + " MEMOR" + (memories.length === 1 ? "Y" : "IES");
+  const count = document.getElementById("memory-count");
+  if (count) count.textContent = memories.length + " MEMOR" + (memories.length === 1 ? "Y" : "IES");
+  if (!list) return;
   if (memories.length === 0) {
-    list.innerHTML = "<div style=\"padding:20px;text-align:center;font-size:10px;color:var(--text-dim)\">No memories yet.<br><br>Jarvis will automatically remember<br>key facts from your conversations.</div>";
+    list.innerHTML = "<div style='padding:20px;text-align:center;font-size:10px;color:var(--text-dim)'>No memories yet. Jarvis will automatically remember key facts from your conversations.</div>";
     return;
   }
-  list.innerHTML = memories.map(function(m) { return "<div class=\"memory-item\"><div class=\"memory-dot\"></div><div style=\"flex:1\"><div class=\"memory-text\">" + escapeHtml(m.memory) + "</div><div class=\"memory-cat\">" + ((m.category || "general").toUpperCase()) + " &middot; " + new Date(m.created_at).toLocaleDateString() + "</div></div><button class=\"memory-del\" onclick=\"deleteMemory('" + m.id + "')\">&times;</button></div>"; }).join("");
+  list.innerHTML = memories.map(function(m) {
+    return "<div class='memory-item'><div class='memory-dot'></div><div style='flex:1'><div class='memory-text'>" + escapeHtml(m.memory) + "</div><div class='memory-cat'>" + (m.category || "general").toUpperCase() + " - " + new Date(m.created_at).toLocaleDateString() + "</div></div><button class='memory-del' onclick=\"deleteMemory('" + m.id + "')\">x</button></div>";
+  }).join("");
 }
 
 async function addMemoryManual() {
-  const input = document.getElementById('memory-input');
+  const input = document.getElementById("memory-input");
+  if (!input) return;
   const text = input.value.trim();
   if (!text) return;
-  const email = localStorage.getItem('jarvis_operator') || '';
-  const memory = { email, memory: text, category: 'manual', created_at: new Date().toISOString() };
-  const r = await dbCall('save_memory', memory);
+  const email = localStorage.getItem("jarvis_operator") || "";
+  const memory = { email: email, memory: text, category: "manual", created_at: new Date().toISOString() };
+  const r = await dbCall("save_memory", memory);
   if (r.ok !== false) {
-    memory.id = r.data?.[0]?.id || Date.now().toString();
+    memory.id = (r.data && r.data[0]) ? r.data[0].id : Date.now().toString();
     memories.unshift(memory);
     renderMemories();
-    input.value = '';
-    addStreamLine('MEMORY SAVED: ' + text.slice(0, 24));
+    input.value = "";
+    addStreamLine("MEMORY SAVED: " + text.slice(0, 24));
   }
 }
 
 async function deleteMemory(id) {
-  await dbCall('delete_memory', { id });
-  memories = memories.filter(m => m.id !== id);
+  await dbCall("delete_memory", { id: id });
+  memories = memories.filter(function(m) { return m.id !== id; });
   renderMemories();
 }
 
 async function clearAllMemories() {
-  const email = localStorage.getItem('jarvis_operator') || '';
-  await dbCall('clear_memories', { email });
+  const email = localStorage.getItem("jarvis_operator") || "";
+  await dbCall("clear_memories", { email: email });
   memories = [];
   renderMemories();
-  addStreamLine('NEURAL MEMORY CLEARED');
+  addStreamLine("NEURAL MEMORY CLEARED");
 }
 
 async function autoExtractMemory(userMsg, aiResponse) {
-  const email = localStorage.getItem('jarvis_operator') || '';
+  const email = localStorage.getItem("jarvis_operator") || "";
   if (!email) return;
-  // Ask Claude to extract memorable facts
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        system: 'You are a memory extraction system. Given a conversation snippet, extract any personal facts, preferences, goals, or important information about the user that would be useful to remember for future conversations. Return ONLY a JSON array of strings, each being a concise memory. If there is nothing worth remembering, return an empty array []. Examples of good memories: "Prefers Python over JavaScript", "Working on a machine learning project", "Name is Jackson", "Lives in Phoenix Arizona". Return raw JSON only, no markdown.',
-        messages: [{ role: 'user', content: `User said: "${userMsg}"
-
-Assistant responded: "${aiResponse.slice(0, 500)}"
-
-Extract memorable facts about the user:` }]
+        system: "You are a memory extraction system. Given a conversation snippet, extract any personal facts, preferences, goals, or important info about the user worth remembering. Return ONLY a JSON array of strings. If nothing worth remembering, return []. Example: [\"Prefers Python\",\"Working on ML project\"]. Raw JSON only.",
+        messages: [{ role: "user", content: "User said: \"" + userMsg + "\"\n\nExtract memorable facts:" }]
       })
     });
     const data = await res.json();
     if (!data.content || !data.content[0]) return;
-    const text = data.content[0].text.trim();
     let facts = [];
-    try { facts = JSON.parse(text); } catch { return; }
+    try { facts = JSON.parse(data.content[0].text.trim()); } catch(e) { return; }
     if (!Array.isArray(facts) || facts.length === 0) return;
-    // Save each fact
-    for (const fact of facts.slice(0, 3)) {
-      if (typeof fact !== 'string' || fact.length < 5) continue;
-      const memory = { email, memory: fact, category: 'auto', created_at: new Date().toISOString() };
-      const r = await dbCall('save_memory', memory);
+    for (let i = 0; i < Math.min(facts.length, 2); i++) {
+      const fact = facts[i];
+      if (typeof fact !== "string" || fact.length < 5) continue;
+      const memory = { email: email, memory: fact, category: "auto", created_at: new Date().toISOString() };
+      const r = await dbCall("save_memory", memory);
       if (r.ok !== false) {
-        memory.id = r.data?.[0]?.id || Date.now().toString();
+        memory.id = (r.data && r.data[0]) ? r.data[0].id : Date.now().toString();
         memories.unshift(memory);
-        addStreamLine('MEMORY EXTRACTED: ' + fact.slice(0, 24));
+        addStreamLine("MEMORY: " + fact.slice(0, 24));
       }
     }
     renderMemories();
-  } catch(e) { /* fail silently */ }
+  } catch(e) { }
 }
 
 function getMemoryContext() {
-  if (memories.length === 0) return '';
-  const recent = memories.slice(0, 20).map(m => m.memory).join('; ');
-  return '
-
-What you remember about this operator: ' + recent + '. Use this context naturally in your responses when relevant.';
+  if (memories.length === 0) return "";
+  const recent = memories.slice(0, 15).map(function(m) { return m.memory; }).join("; ");
+  return "\n\nWhat you remember about this operator: " + recent + ". Use this context naturally when relevant.";
 }
 
-// Listen for "remember that" in messages
 function checkManualMemoryTrigger(text) {
   const lower = text.toLowerCase();
-  const triggers = ['remember that', 'remember i', 'remember my', 'don't forget', 'note that', 'keep in mind'];
-  return triggers.some(t => lower.includes(t));
+  return ["remember that","remember i","remember my","don't forget","note that"].some(function(t) { return lower.includes(t); });
 }
-
-document.getElementById('memory-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addMemoryManual();
-});
 
 // ── CONTACTS ──────────────────────────────────────────
 let contacts = [];
