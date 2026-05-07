@@ -54,6 +54,38 @@ export default async function handler(req, res) {
         const r = await sbFetch(`contacts?id=eq.${payload.id}`, 'DELETE');
         return res.status(200).json({ ok: r.ok });
       }
+      case 'load_memories': {
+        const r = await sbFetch(`memories?email=eq.${encodeURIComponent(payload.email)}&order=created_at.desc&limit=50`);
+        return res.status(200).json({ data: r.data || [] });
+      }
+      case 'save_memory': {
+        const r = await sbFetch('memories', 'POST', payload);
+        return res.status(200).json({ ok: r.ok, data: r.data });
+      }
+      case 'delete_memory': {
+        const r = await sbFetch(`memories?id=eq.${payload.id}`, 'DELETE');
+        return res.status(200).json({ ok: r.ok });
+      }
+      case 'clear_memories': {
+        const r = await sbFetch(`memories?email=eq.${encodeURIComponent(payload.email)}`, 'DELETE');
+        return res.status(200).json({ ok: r.ok });
+      }
+      case 'load_memories': {
+        const r = await sbFetch(`memories?email=eq.${encodeURIComponent(payload.email)}&order=created_at.desc&limit=50`);
+        return res.status(200).json({ data: r.data || [] });
+      }
+      case 'save_memory': {
+        const r = await sbFetch('memories', 'POST', payload);
+        return res.status(200).json({ ok: r.ok, data: r.data });
+      }
+      case 'delete_memory': {
+        const r = await sbFetch(`memories?id=eq.${payload.id}`, 'DELETE');
+        return res.status(200).json({ ok: r.ok });
+      }
+      case 'clear_memories': {
+        const r = await sbFetch(`memories?email=eq.${encodeURIComponent(payload.email)}`, 'DELETE');
+        return res.status(200).json({ ok: r.ok });
+      }
       default:
         return res.status(400).json({ error: 'Unknown action' });
     }
