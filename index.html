@@ -1385,98 +1385,13 @@ async function clearMemories() {
 }
 
 function renderMemories() {
-  const list = document.getElementById('memory-list');
-  document.getElementById('memory-count').textContent = memories.length + ' MEMOR' + (memories.length === 1 ? 'Y' : 'IES');
+  const list = document.getElementById("memory-list");
+  document.getElementById("memory-count").textContent = memories.length + " MEMOR" + (memories.length === 1 ? "Y" : "IES");
   if (memories.length === 0) {
-    list.innerHTML = '<div class="memory-empty">No memories stored yet.<br><br>Tell Jarvis to remember something<br>or it will auto-extract facts<br>from your conversations.</div>';
+    list.innerHTML = "<div style=\"padding:20px;text-align:center;font-size:10px;color:var(--text-dim)\">No memories yet.<br><br>Jarvis will automatically remember<br>key facts from your conversations.</div>";
     return;
   }
-  list.innerHTML = memories.map(m => `
-    <div class="memory-item">
-      <div style="flex:1">
-        <div class="memory-text">${escapeHtml(m.memory)}</div>
-        <div class="memory-cat">${(m.category || 'general').toUpperCase()}</div>
-      </div>
-      <button class="memory-del" onclick="deleteMemory('${m.id}')" title="Delete">&#10005;</button>
-    </div>`).join('');
-}
-
-function getMemoryContext() {
-  if (memories.length === 0) return '';
-  const list = memories.slice(0, 20).map(m => m.memory).join('; ');
-  return '\n\nThings you remember about this operator: ' + list + '. Use these naturally in conversation when relevant.';
-}
-
-async function autoExtractMemories(userText, aiText) {
-  const email = localStorage.getItem('jarvis_operator') || '';
-  if (!email) return;
-  // Simple keyword-based extraction
-  const combined = userText + ' ' + aiText;
-  const patterns = [
-    { regex: /i (?:am|'m) (?:a |an )?([a-z][a-z\s]+?)(?:\.|,|$)/i, cat: 'personal' },
-    { regex: /i (?:work|working) (?:at|for|on) ([a-z][a-z\s]+?)(?:\.|,|$)/i, cat: 'personal' },
-    { regex: /i (?:prefer|like|love|use|enjoy) ([a-z][a-z\s]+?)(?:\.|,|$)/i, cat: 'preference' },
-    { regex: /my (?:name is|email is|phone is) ([a-z@.\d\s]+?)(?:\.|,|$)/i, cat: 'personal' },
-    { regex: /(?:working on|building|creating|developing) ([a-z][a-z\s]+?)(?:\.|,|$)/i, cat: 'project' },
-    { regex: /remember (?:that )?(.+?)(?:\.|$)/i, cat: 'general' },
-  ];
-  for (const { regex, cat } of patterns) {
-    const match = userText.match(regex);
-    if (match && match[1] && match[1].length > 3 && match[1].length < 100) {
-      const memText = match[0].trim();
-      // Don't duplicate
-      if (!memories.some(m => m.memory.toLowerCase() === memText.toLowerCase())) {
-        const r = await dbCall('save_memory', { email, memory: memText, category: cat, created_at: new Date().toISOString() });
-        if (r.ok !== false) {
-          memories.unshift({ id: r.data?.[0]?.id || Date.now(), memory: memText, category: cat });
-          addStreamLine('AUTO-MEMORY: ' + memText.slice(0, 24));
-        }
-      }
-    }
-  }
-}
-
-document.getElementById('memory-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addMemory();
-});
-
-// ── MEMORY ────────────────────────────────────────────
-
-
-async function loadMemories(email) {
-  const r = await dbCall('load_memories', { email });
-  if (r.data && r.data.length > 0) {
-    memories = r.data;
-    renderMemories();
-    addStreamLine('MEMORIES LOADED: ' + memories.length + ' ON FILE');
-  }
-}
-
-function toggleMemory() {
-  const panel = document.getElementById('memory-panel');
-  const overlay = document.getElementById('memory-overlay');
-  const isOpen = panel.classList.contains('open');
-  panel.classList.toggle('open');
-  overlay.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) renderMemories();
-}
-
-function renderMemories() {
-  const list = document.getElementById('memory-list');
-  document.getElementById('memory-count').textContent = memories.length + ' MEMOR' + (memories.length === 1 ? 'Y' : 'IES');
-  if (memories.length === 0) {
-    list.innerHTML = '<div style="padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">No memories yet.<br><br>Jarvis will automatically remember<br>key facts from your conversations.</div>';
-    return;
-  }
-  list.innerHTML = memories.map(m => `
-    <div class="memory-item">
-      <div class="memory-dot"></div>
-      <div style="flex:1">
-        <div class="memory-text">${escapeHtml(m.memory)}</div>
-        <div class="memory-cat">${(m.category || 'general').toUpperCase()} &middot; ${new Date(m.created_at).toLocaleDateString()}</div>
-      </div>
-      <button class="memory-del" onclick="deleteMemory('${m.id}')">&#10005;</button>
-    </div>`).join('');
+  list.innerHTML = memories.map(function(m) { return "<div class=\"memory-item\"><div class=\"memory-dot\"></div><div style=\"flex:1\"><div class=\"memory-text\">" + escapeHtml(m.memory) + "</div><div class=\"memory-cat\">" + ((m.category || "general").toUpperCase()) + " &middot; " + new Date(m.created_at).toLocaleDateString() + "</div></div><button class=\"memory-del\" onclick=\"deleteMemory('" + m.id + "')\">&times;</button></div>"; }).join("");
 }
 
 async function addMemoryManual() {
